@@ -5,78 +5,164 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>RocketRules · 自选分流</title>
 <style>
-:root{color-scheme:dark}
-*{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
-body{
-  margin:0;
-  background:#04070a;
-  background-image:radial-gradient(720px 320px at 50% -80px, rgba(74,222,128,.08), transparent 70%);
-  color:#d5e5d8;
-  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
-  font-size:15px;line-height:1.65;
-  padding:18px 12px 72px;
+:root{
+  color-scheme:light;
+  --bg:#eceee8;
+  --panel:#ffffff;
+  --ink:#10130f;
+  --muted:#5b665e;
+  --accent:#0c8a54;
+  --accent-soft:#e7f4ec;
+  --accent-line:#bfe3cd;
+  --on-accent:#ffffff;
+  --amber:#a86e00;
+  --amber-soft:#faf3df;
+  --amber-line:#e8d5a4;
+  --cyan:#0b7183;
+  --red:#c2362f;
+  --red-soft:#fbeae8;
+  --red-line:#f0c6c2;
+  --line:#d9ded6;
+  --line-soft:#e6eae1;
+  --card:#ffffff;
+  --card-soft:#f7f9f4;
+  --code-bg:#0c100c;
+  --code-ink:#d9f2c4;
+  --shadow:0 1px 2px rgba(16,19,15,.05),0 6px 20px rgba(16,19,15,.05);
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
 }
-/* ---- 终端窗口 ---- */
-.term{max-width:880px;margin:0 auto;background:#0a0f0c;border:1px solid #1d2b20;border-radius:14px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.55),0 0 0 1px rgba(74,222,128,.04)}
-.titlebar{display:flex;align-items:center;gap:8px;padding:11px 14px;background:#0e1510;border-bottom:1px solid #1d2b20;font-size:12px;color:#7d93b5}
+@media (prefers-color-scheme:dark){
+  :root{
+    color-scheme:dark;
+    --bg:#0f120f;
+    --panel:#171b17;
+    --ink:#e9ede8;
+    --muted:#9db3a4;
+    --accent:#3ddc84;
+    --accent-soft:#12241a;
+    --accent-line:#1f4d33;
+    --on-accent:#052e1b;
+    --amber:#e0a63c;
+    --amber-soft:#2a2210;
+    --amber-line:#5c4a1c;
+    --cyan:#5fc4d4;
+    --red:#f07870;
+    --red-soft:#2c1512;
+    --red-line:#5c2a26;
+    --line:#2a332c;
+    --line-soft:#222b23;
+    --card:#1a1f1a;
+    --card-soft:#20261f;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 6px 20px rgba(0,0,0,.35);
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15px;line-height:1.65}
+.wrap{max-width:1180px;margin:0 auto;padding:14px 16px 48px}
+/* ---- 顶部 prompt 条 ---- */
+.promptbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:2px 2px 12px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.pb-dollar{color:var(--accent);font-weight:700;margin-right:6px}
+.promptbar a{color:var(--muted);text-decoration:none}
+.promptbar a:hover{color:var(--accent)}
+@media(max-width:560px){.promptbar a{display:none}}
+/* ---- 深色 hero ---- */
+.hero{background:linear-gradient(180deg,#10160f,#0c100c);color:#d9f2c4;border-radius:16px;overflow:hidden;box-shadow:0 18px 44px rgba(16,19,15,.28);margin-bottom:16px}
+.titlebar{display:flex;align-items:center;gap:8px;padding:11px 14px;background:rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.07);font-size:12px}
 .dot{width:11px;height:11px;border-radius:50%;flex:none}
 .r{background:#ff5f57}.y{background:#febc2e}.g{background:#28c840}
-.titlebar code{color:#9fb4a6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.titlebar .tb-right{margin-left:auto;color:#5b6b5e;flex:none}
-.term-body{padding:22px 18px 26px}
-@media(min-width:640px){.term-body{padding:26px 28px 30px}}
-h1{font-size:clamp(28px,7vw,40px);margin:6px 0 6px;letter-spacing:-.5px;color:#eafff0}
+.titlebar code{font-family:var(--mono);color:#9fb4a6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.titlebar .tb-right{margin-left:auto;color:#5b6b5e;flex:none;font-family:var(--mono)}
+.hero-body{display:grid;grid-template-columns:1.25fr .75fr;gap:28px;padding:28px 28px 30px}
+@media(max-width:820px){.hero-body{grid-template-columns:1fr;padding:24px 20px 26px}}
+h1{font-size:clamp(30px,6vw,44px);margin:2px 0 8px;letter-spacing:-.5px;color:#f2fbf0;line-height:1.15}
 h1 .prompt{color:#4ade80}
-.cursor{display:inline-block;width:.58em;height:1.02em;background:#4ade80;vertical-align:-.12em;margin-left:3px;animation:blink 1.1s steps(1) infinite}
+.cursor{display:inline-block;width:.55em;height:1em;background:#4ade80;vertical-align:-.1em;margin-left:4px;animation:blink 1.1s steps(1) infinite}
 @keyframes blink{50%{opacity:0}}
 @media (prefers-reduced-motion: reduce){.cursor{animation:none}}
-.sub{color:#9db3a4;margin:0 0 10px;max-width:62ch}
-.stats{color:#4ade80;margin:0;font-size:13px}
-.sep{color:#223626;white-space:nowrap;overflow:hidden;font-size:12px;margin:18px 0;user-select:none}
-.panel{background:#0d130e;border:1px solid #1f2d22;border-radius:12px;padding:20px}
-h2{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;font-size:17px;margin:0 0 6px;color:#eafff0}
-h2 .num{color:#4ade80;font-size:13px}
-h2 .cmd{color:#7dd3fc}
-h2 .zh{color:#9db3a4;font-size:14px;font-weight:400}
-.hint{color:#8ba392;font-size:14px;margin:4px 0 14px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
-.card{position:relative;display:flex;gap:12px;align-items:flex-start;padding:14px;border:1px solid #243526;border-radius:10px;cursor:pointer;background:#0c120d;transition:border-color .15s,background .15s}
-.card:hover{border-color:#3a5a40}
-.card:has(input:checked){background:#0f1f14;border-color:#4ade80}
-.card:has(input:checked)::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:3px;background:#4ade80}
-.card input{accent-color:#4ade80;width:20px;height:20px;margin-top:2px;flex:none}
+.sub{color:#a9bfae;margin:0 0 16px;max-width:56ch}
+.stats{font-family:var(--mono);font-size:13px;color:#4ade80;margin:0 0 6px}
+.hero-picked{margin:0;font-size:14px;color:#d9f2c4}
+.hero-picked #barPicked{color:#4ade80;font-weight:700}
+.hero-actions{display:flex;flex-direction:column;gap:10px;justify-content:center}
+.hero-note{margin:2px 0 0;font-size:13px;color:#8ba392}
+/* ---- KPI 卡 ---- */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:0 0 16px}
+@media(max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
+.kpi-label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+.kpi-num{display:block;font-family:var(--mono);font-size:28px;font-weight:700;line-height:1.2;color:var(--ink)}
+.kpi-sub{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+/* ---- 粘性胶囊锚点导航 ---- */
+.anchor-nav{position:sticky;top:12px;z-index:30;display:flex;justify-content:center;width:max-content;max-width:100%;margin:0 auto 20px;padding:5px;gap:4px;background:var(--panel);background:color-mix(in srgb,var(--panel) 88%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:999px;box-shadow:var(--shadow)}
+.anchor-nav a{padding:8px 20px;border-radius:999px;text-decoration:none;font-size:14px;font-weight:600;color:var(--muted);white-space:nowrap}
+.anchor-nav a:hover{color:var(--ink);background:var(--card-soft)}
+@media(max-width:620px){
+  .anchor-nav{position:static;width:100%;display:grid;grid-template-columns:1fr 1fr;border-radius:16px;padding:8px}
+  .anchor-nav a{text-align:center}
+}
+/* ---- 章节 ---- */
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:24px;box-shadow:var(--shadow);margin-bottom:20px;scroll-margin-top:76px}
+@media(max-width:620px){.panel{padding:20px 16px}}
+.sec-head{margin-bottom:16px}
+.cmd{display:inline-block;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--accent);background:var(--accent-soft);border:1px solid var(--accent-line);border-radius:6px;padding:2px 8px}
+.sec-head h2{font-size:22px;margin:10px 0 4px;letter-spacing:-.2px}
+.hint{color:var(--muted);font-size:14px;margin:0}
+/* ---- 徽章：域名个数，颜色表示校验状态 ---- */
+.badge{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--muted);background:var(--card-soft);border:1px solid var(--line);border-radius:999px;padding:3px 9px;white-space:nowrap;flex:none}
+.badge::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--muted);flex:none}
+.badge-ok{color:var(--accent);background:var(--accent-soft);border-color:var(--accent-line)}
+.badge-ok::before{background:var(--accent)}
+.badge-warn{color:var(--amber);background:var(--amber-soft);border-color:var(--amber-line)}
+.badge-warn::before{background:var(--amber)}
+.badge-empty{color:var(--red);background:var(--red-soft);border-color:var(--red-line)}
+.badge-empty::before{background:var(--red)}
+/* ---- 预设卡：操作入口，带浅色标题栏 ---- */
+.preset-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.preset{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:0;overflow:hidden;transition:border-color .15s,box-shadow .15s;display:flex;flex-direction:column}
+.preset:hover{border-color:var(--accent);box-shadow:var(--shadow)}
+.preset h3{margin:0;padding:14px 16px;background:var(--accent-soft);border-bottom:1px solid var(--line-soft);font-size:16px;color:var(--ink);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.preset h3 .badge{margin-left:auto}
+.preset p{color:var(--muted);font-size:13px;margin:0;padding:12px 16px 0}
+.preset .row{margin:0;padding:14px 16px 16px}
+.preset .btn,.preset button{flex:1;padding:11px 10px;font-size:14px;min-height:48px}
+/* ---- 规则卡：勾选列表 ---- */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+@media(max-width:620px){.grid{grid-template-columns:1fr}}
+.card{position:relative;display:flex;gap:12px;align-items:flex-start;padding:16px;border:1px solid var(--line);border-radius:12px;cursor:pointer;background:var(--card);transition:border-color .15s,box-shadow .15s,background .15s}
+.card:hover{border-color:var(--accent);box-shadow:var(--shadow)}
+.card:has(input:checked){background:var(--accent-soft);border-color:var(--accent)}
+.card:has(input:checked)::before{content:"";position:absolute;left:0;top:12px;bottom:12px;width:3px;border-radius:3px;background:var(--accent)}
+.card input{accent-color:var(--accent);width:20px;height:20px;margin-top:2px;flex:none}
 .card .t{flex:1;min-width:0}
-.card strong{display:block;font-size:15px;color:#eafff0}
-.card small{display:block;color:#8ba392;font-size:13px;line-height:1.5}
-.badge{font-size:11px;color:#4ade80;border:1px solid #2c4a35;border-radius:6px;padding:2px 8px;white-space:nowrap;flex:none}
-.badge::before{content:"["}
-.badge::after{content:"]"}
+.card strong{display:block;font-size:15px;color:var(--ink)}
+.card small{display:block;color:var(--muted);font-size:13px;line-height:1.5}
+.meter{display:block;height:6px;background:var(--line-soft);border-radius:3px;margin-top:10px;overflow:hidden}
+.meter-fill{display:block;height:100%;background:var(--accent);border-radius:3px}
+.card-meta{display:block;font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:6px}
+/* ---- 行与按钮 ---- */
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px}
-/* ---- 键盘按键风格按钮 ---- */
 button,.btn{
-  border:1px solid #2c3f31;border-radius:8px;
-  background:linear-gradient(#182218,#121a13);color:#d7f5e3;
+  border:1px solid var(--line);border-radius:10px;
+  background:var(--card);color:var(--ink);
   padding:12px 16px;font-weight:700;font-size:14px;cursor:pointer;min-height:48px;
   font-family:inherit;text-decoration:none;display:inline-block;text-align:center;
-  box-shadow:0 3px 0 #05080a,inset 0 1px 0 rgba(255,255,255,.06);
-  transition:transform .06s,box-shadow .06s,border-color .15s;
+  box-shadow:0 3px 0 rgba(16,19,15,.14),inset 0 1px 0 rgba(255,255,255,.5);
+  transition:transform .06s,box-shadow .06s,border-color .15s,background .15s;
 }
-button:hover,.btn:hover{border-color:#4ade80}
-button:active,.btn:active{transform:translateY(3px);box-shadow:0 0 0 rgba(0,0,0,0),inset 0 1px 0 rgba(255,255,255,.06)}
-.primary{background:linear-gradient(#166534,#14532d);border-color:#22c55e;color:#dcfce7;box-shadow:0 3px 0 #052e16,inset 0 1px 0 rgba(255,255,255,.12)}
-.secondary{background:linear-gradient(#182218,#121a13);color:#d7f5e3}
-.picked{color:#8ba392;font-size:14px}
-#status{color:#4ade80;min-height:1.4em;margin:10px 0 6px}
-#status::before{content:"> ";color:#5b6b5e}
-/* ---- 语法高亮的代码块（替代原来的 textarea） ---- */
-.codeblock{
-  width:100%;max-height:340px;overflow:auto;margin:0;
-  background:#05080a;color:#d5e5d8;border:1px solid #243526;border-radius:10px;
-  padding:14px;font-size:12px;line-height:1.7;white-space:pre;
-}
-.codeblock:focus-visible{outline:2px solid #4ade80;outline-offset:2px}
-.hl-com{color:#5b6b5e}
+button:hover,.btn:hover{border-color:var(--accent)}
+button:active,.btn:active{transform:translateY(3px);box-shadow:0 0 0 rgba(0,0,0,0)}
+.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);box-shadow:0 3px 0 rgba(12,138,84,.35),inset 0 1px 0 rgba(255,255,255,.18)}
+.primary:hover{border-color:var(--accent)}
+.secondary{background:var(--card);color:var(--ink)}
+.picked{color:var(--muted);font-size:14px}
+#status{color:var(--accent);min-height:1.4em;margin:10px 0 6px;font-size:14px}
+#status::before{content:"> ";color:var(--muted)}
+/* ---- 深色语法高亮代码块 ---- */
+.codeblock{width:100%;max-height:340px;overflow:auto;margin:0;background:var(--code-bg);color:var(--code-ink);border:1px solid #22301f;border-radius:10px;padding:14px;font-family:var(--mono);font-size:12px;line-height:1.7;white-space:pre}
+.codeblock:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hl-com{color:#6b7f6e}
 .hl-sec{color:#7dd3fc;font-weight:700}
 .hl-kw{color:#4ade80}
 .hl-dom{color:#e2e8f0}
@@ -84,70 +170,83 @@ button:active,.btn:active{transform:translateY(3px);box-shadow:0 0 0 rgba(0,0,0,
 .hl-final{color:#f87171;font-weight:700}
 .hl-dir{color:#fbbf24;font-weight:700}
 .hl-val{color:#d5e5d8}
-.warn{background:#1a1408;border:1px solid #7a5b1e;color:#ffd479;border-radius:10px;padding:12px 14px;font-size:14px;margin-top:14px}
+.warn{background:var(--amber-soft);border:1px solid var(--amber-line);color:var(--amber);border-radius:10px;padding:12px 14px;font-size:14px;margin-top:14px}
 .warn::before{content:"[!] ";font-weight:700}
-.src{color:#5b6b5e;font-size:13px;margin:10px 0 0}
-.preset-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
-.preset{border:1px solid #243526;border-radius:10px;padding:16px;background:#0c120d;transition:border-color .15s}
-.preset:hover{border-color:#3a5a40}
-.preset h3{margin:0 0 2px;font-size:16px;color:#eafff0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.preset p{color:#8ba392;font-size:13px;margin:0 0 12px}
-.preset .row{margin-top:0}
-.preset .btn,.preset button{flex:1;padding:11px 10px;font-size:14px;min-height:48px}
-.steps{margin:0 0 14px;padding-left:20px;color:#9db3a4;font-size:14px}
+.src{color:var(--muted);font-size:13px;margin:10px 0 0}
+.steps{margin:0 0 14px;padding-left:20px;color:var(--muted);font-size:14px}
 .steps li{margin:4px 0}
-.steps li::marker{color:#4ade80}
-input[type=text]{flex:1;min-width:200px;background:#070c08;color:#eafff0;border:1px solid #243526;border-radius:8px;padding:12px 14px;font-size:14px;min-height:48px;font-family:inherit}
-input[type=text]:focus{outline:none;border-color:#4ade80;box-shadow:0 0 0 2px rgba(74,222,128,.25)}
-code{font-family:inherit;overflow-wrap:anywhere}
-.duo{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.steps li::marker{color:var(--accent)}
+input[type=text]{flex:1;min-width:200px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-family:var(--mono);font-size:14px;min-height:48px}
+input[type=text]:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px rgba(12,138,84,.25)}
+code{font-family:var(--mono);overflow-wrap:anywhere}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media(max-width:560px){.duo{grid-template-columns:1fr}}
-.duo div{border:1px solid #243526;border-radius:10px;padding:14px;background:#0c120d}
-.duo h3{margin:0 0 4px;font-size:15px;color:#eafff0}
-.duo h3::before{content:"$ ";color:#4ade80}
-.duo p{margin:0;color:#8ba392;font-size:13px}
-.sub-out{margin-top:14px;border-top:1px dashed #243526;padding-top:14px}
-.sub-out code{display:block;background:#05080a;border:1px solid #243526;border-radius:8px;padding:10px;margin:8px 0;font-size:12px;color:#7dd3fc}
-.warnline{color:#ffd479;font-size:13px}
-footer{color:#5b6b5e;font-size:13px;text-align:center;margin-top:22px}
-footer::before{content:"// eof";display:block;color:#3a4a3e;margin-bottom:6px}
-a{color:#7dd3fc}
-:focus-visible{outline:2px solid #4ade80;outline-offset:2px}
-/* ---- 底部固定状态栏 ---- */
-.statusbar{
-  position:fixed;left:0;right:0;bottom:0;z-index:20;
-  display:flex;align-items:center;justify-content:space-between;gap:12px;
-  background:rgba(10,15,12,.96);border-top:1px solid #1f2d22;
-  padding:9px 14px calc(9px + env(safe-area-inset-bottom));
-  font-size:12px;color:#8ba392;
-}
-.statusbar .sb-left{display:flex;align-items:center;gap:8px;min-width:0}
-.sb-dot{width:8px;height:8px;border-radius:50%;background:#4ade80;flex:none;box-shadow:0 0 8px rgba(74,222,128,.8)}
-#barPicked{color:#4ade80;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sb-right{color:#5b6b5e;white-space:nowrap;flex:none}
-@media(max-width:560px){.sb-right{display:none}}
+.duo div{border:1px solid var(--line);border-radius:12px;padding:16px;background:var(--card-soft)}
+.duo h3{margin:0 0 4px;font-size:15px;color:var(--ink)}
+.duo h3::before{content:"$ ";color:var(--accent)}
+.duo p{margin:0;color:var(--muted);font-size:13px}
+.sub-out{margin-top:14px;border-top:1px dashed var(--line);padding-top:14px}
+.sub-out label{font-size:13px;color:var(--muted)}
+.sub-out code{display:block;background:var(--code-bg);border:1px solid #22301f;border-radius:8px;padding:10px;margin:8px 0;font-family:var(--mono);font-size:12px;color:#7dd3fc}
+.warnline{color:var(--amber);font-size:13px}
+footer{color:var(--muted);font-size:13px;text-align:center;margin-top:24px}
+footer .eof{font-family:var(--mono);font-size:12px;margin:0 0 6px}
+footer p{margin:0}
+a{color:var(--cyan)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 </style>
 </head>
 <body>
-<div class="term">
-<div class="titlebar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><code>openc2023@github:~/RocketRules</code><span class="tb-right">zsh</span></div>
-<div class="term-body">
+<div class="wrap">
+<div class="promptbar"><span><span class="pb-dollar">$</span> rocketrules</span><a href="https://github.com/openc2023/RocketRules">github.com/openc2023/RocketRules ↗</a></div>
 
-<header>
-  <h1><span class="prompt">$</span> RocketRules<span class="cursor" aria-hidden="true"></span></h1>
-  <p class="sub">选择哪些网站走 Shadowrocket 代理，其余全部直连。没有账号密码，不经过任何服务器；勾选只保存在网址参数里。</p>
-  <p class="stats" id="stats">正在加载规则…</p>
+<header class="hero">
+<div class="titlebar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><code>openc2023@github:~/RocketRules</code><span class="tb-right">zsh</span></div>
+<div class="hero-body">
+  <div class="hero-main">
+    <h1><span class="prompt">$</span> RocketRules<span class="cursor" aria-hidden="true"></span></h1>
+    <p class="sub">选择哪些网站走 Shadowrocket 代理，其余全部直连。没有账号密码，不经过任何服务器；勾选只保存在网址参数里。</p>
+    <p class="stats" id="stats">正在加载规则…</p>
+    <p class="hero-picked"><span id="barPicked">加载中…</span></p>
+  </div>
+  <div class="hero-actions">
+    <a class="btn primary" id="heroImport" href="shadowrocket://install?url=https%3A%2F%2Fraw.githubusercontent.com%2Fopenc2023%2FRocketRules%2Fmain%2Fconfigs%2Fcombined.conf">一键导入全部规则</a>
+    <button class="secondary" id="heroCopy">复制订阅地址</button>
+    <p class="hero-note">基于仓库里的 combined.conf，一次导入全部规则。</p>
+  </div>
+</div>
 </header>
 
-<section class="panel">
-  <h2><span class="num">[01]</span><span class="cmd">$ presets --import</span><span class="zh">现成配置 · 点一下就导入</span></h2>
-  <p class="hint">下面 4 个是仓库里已经生成好的远程配置，地址固定不变。点「一键导入」会直接打开 Shadowrocket 并添加；如果没反应，复制远程配置地址，到 Shadowrocket「配置」→ 右上角 + → 粘贴 → Download → 点一下启用。</p>
+<section class="kpis" aria-label="统计">
+  <div class="kpi"><span class="kpi-label">已选组数</span><span class="kpi-num" id="kpiGroups">–</span><span class="kpi-sub">当前勾选</span></div>
+  <div class="kpi"><span class="kpi-label">域名总数</span><span class="kpi-num" id="kpiDomains">–</span><span class="kpi-sub">规则库全部域名</span></div>
+  <div class="kpi"><span class="kpi-label">预设配置</span><span class="kpi-num" id="kpiPresets">–</span><span class="kpi-sub">一键导入</span></div>
+  <div class="kpi"><span class="kpi-label">配置大小</span><span class="kpi-num" id="kpiSize">–</span><span class="kpi-sub">当前勾选生成</span></div>
+</section>
+
+<nav class="anchor-nav" aria-label="页面导航">
+  <a href="#sec-rules">规则</a>
+  <a href="#sec-presets">预设</a>
+  <a href="#sec-preview">预览</a>
+  <a href="#sec-publish">导入</a>
+</nav>
+
+<main>
+<section class="panel" id="sec-presets">
+  <div class="sec-head">
+    <code class="cmd">$ presets</code>
+    <h2>现成配置</h2>
+    <p class="hint">下面 4 个是仓库里已经生成好的远程配置，地址固定不变。点「一键导入」会直接打开 Shadowrocket 并添加；如果没反应，复制远程配置地址，到 Shadowrocket「配置」→ 右上角 + → 粘贴 → Download → 点一下启用。</p>
+  </div>
   <div class="preset-grid" id="presets"></div>
 </section>
-<div class="sep" aria-hidden="true">────────────────────────────────────────────────────────────────────────</div>
 
-<section class="panel">
-  <h2><span class="num">[02]</span><span class="cmd">$ select-rules</span><span class="zh">自选规则</span></h2>
+<section class="panel" id="sec-rules">
+  <div class="sec-head">
+    <code class="cmd">$ select-rules</code>
+    <h2>自选规则</h2>
+    <p class="hint">勾选需要的组，生成配置只包含勾选的部分。进度条表示该组域名数量占最多一组的比例；徽章颜色表示规则校验状态。</p>
+  </div>
   <div class="grid" id="rules"></div>
   <div class="row">
     <button id="all" class="secondary">全选</button>
@@ -157,11 +256,13 @@ a{color:#7dd3fc}
   <p class="src" id="srcNote"></p>
   <div class="warn" id="warnBox" hidden></div>
 </section>
-<div class="sep" aria-hidden="true">────────────────────────────────────────────────────────────────────────</div>
 
-<section class="panel">
-  <h2><span class="num">[03]</span><span class="cmd">$ build-config</span><span class="zh">生成配置</span></h2>
-  <p class="hint">默认只勾 Meta 全家桶和 IP 测试网站。生成后在 Shadowrocket 的「配置」中导入，并选择你已有的代理节点；全局路由选「配置」。</p>
+<section class="panel" id="sec-preview">
+  <div class="sec-head">
+    <code class="cmd">$ preview</code>
+    <h2>生成配置</h2>
+    <p class="hint">默认只勾 Meta 全家桶和 IP 测试网站。生成后在 Shadowrocket 的「配置」中导入，并选择你已有的代理节点；全局路由选「配置」。</p>
+  </div>
   <div class="row">
     <button id="download" class="primary">下载 .conf</button>
     <button id="copyconf" class="secondary">复制配置文本</button>
@@ -170,11 +271,13 @@ a{color:#7dd3fc}
   <p id="status" role="status"></p>
   <pre id="output" class="codeblock" tabindex="0" aria-label="生成的配置预览">$ build-config …</pre>
 </section>
-<div class="sep" aria-hidden="true">────────────────────────────────────────────────────────────────────────</div>
 
-<section class="panel">
-  <h2><span class="num">[04]</span><span class="cmd">$ publish --subscribe</span><span class="zh">把自选配置变成订阅链接</span></h2>
-  <p class="hint">上面生成的配置是下载到手机里的文件，Shadowrocket 没法直接从网页里抓它。想长期用一个固定链接订阅，需要先把文件传到仓库的 configs/ 文件夹。</p>
+<section class="panel" id="sec-publish">
+  <div class="sec-head">
+    <code class="cmd">$ publish</code>
+    <h2>把自选配置变成订阅链接</h2>
+    <p class="hint">上面生成的配置是下载到手机里的文件，Shadowrocket 没法直接从网页里抓它。想长期用一个固定链接订阅，需要先把文件传到仓库的 configs/ 文件夹。</p>
+  </div>
   <ol class="steps">
     <li>点「下载 .conf」把文件存到手机</li>
     <li>打开 GitHub 仓库 → configs 文件夹 → Add file → Upload files，上传刚才的文件</li>
@@ -194,22 +297,25 @@ a{color:#7dd3fc}
     <p class="warnline">没上传之前这个地址是 404，导入会失败；传完再点。</p>
   </div>
 </section>
-<div class="sep" aria-hidden="true">────────────────────────────────────────────────────────────────────────</div>
 
-<section class="panel">
-  <h2><span class="num">[05]</span><span class="cmd">$ share --vs-subscribe</span><span class="zh">分享网址 ≠ 订阅链接</span></h2>
+<section class="panel" id="sec-share">
+  <div class="sec-head">
+    <code class="cmd">$ share</code>
+    <h2>分享网址 ≠ 订阅链接</h2>
+    <p class="hint">两个地址长得很像，用途完全不同。</p>
+  </div>
   <div class="duo">
     <div><h3>分享网址</h3><p>打开这个页面并恢复你的勾选。只是个网页地址，不能加到 Shadowrocket 里当订阅。</p></div>
     <div><h3>远程配置地址</h3><p>一个 .conf 文件的直链，可以加到 Shadowrocket「配置」里，之后仓库里的文件改了，App 里点更新就能同步。</p></div>
   </div>
 </section>
+</main>
 
 <footer>
+  <p class="eof">// eof</p>
   <p><a href="https://github.com/openc2023/RocketRules">github.com/openc2023/RocketRules</a> · 规则来自仓库 rules/*.list · 不含任何代理账号密码</p>
 </footer>
 </div>
-</div>
-<div class="statusbar"><span class="sb-left"><span class="sb-dot"></span><span>RocketRules</span><span id="barPicked">加载中…</span></span><span class="sb-right">FINAL,DIRECT · UTF-8 · LF</span></div>
 <script>
 'use strict';
 var REPO = 'openc2023/RocketRules';
@@ -253,6 +359,7 @@ var PRESETS = [
 ];
 
 var groups = null;
+var groupWarns = {};
 var loadWarnings = [];
 var query = new URLSearchParams(location.search);
 var selected = new Set(
@@ -268,6 +375,8 @@ function escapeHtml(s){
 function status(s){ el('status').textContent = s; }
 function rawUrl(path){ return RAW_BASE + path; }
 function importUrl(raw){ return 'shadowrocket://install?url=' + encodeURIComponent(raw); }
+function byteLen(s){ return unescape(encodeURIComponent(s)).length; }
+function fmtSize(n){ return n < 1024 ? n + ' B' : (n / 1024).toFixed(1) + ' KB'; }
 function totalDomains(){ return ORDER.reduce(function(n,k){ return n + (groups[k]||[]).length; }, 0); }
 function countSelected(){
   var n = 0;
@@ -377,7 +486,7 @@ function renderPresets(){
     var b = document.createElement('button');
     b.className = 'secondary';
     b.textContent = '复制远程配置地址';
-    b.addEventListener('click', function(){ copyText(raw, '已复制远程配置地址'); });
+    b.addEventListener('click', function(){ copyText(raw, '已复制远程配置地址', b); });
     row.appendChild(a);
     row.appendChild(b);
     card.appendChild(h);
@@ -390,6 +499,9 @@ function renderPresets(){
 function renderRules(){
   var box = el('rules');
   box.innerHTML = '';
+  var maxCount = 1;
+  ORDER.forEach(function(k){ maxCount = Math.max(maxCount, (groups[k] || []).length); });
+  var STATUS = {ok:['badge-ok','正常'], warn:['badge-warn','待检查'], empty:['badge-empty','无规则']};
   ORDER.forEach(function(k){
     var l = document.createElement('label');
     l.className = 'card';
@@ -406,11 +518,24 @@ function renderRules(){
     s.textContent = META[k].label;
     var sm = document.createElement('small');
     sm.textContent = META[k].desc;
+    var meter = document.createElement('span');
+    meter.className = 'meter';
+    var fill = document.createElement('span');
+    fill.className = 'meter-fill';
+    fill.style.width = Math.max(4, Math.round((groups[k] || []).length / maxCount * 100)) + '%';
+    meter.appendChild(fill);
+    var meta = document.createElement('span');
+    meta.className = 'card-meta';
+    meta.textContent = (groups[k] || []).length + ' 个域名';
     t.appendChild(s);
     t.appendChild(sm);
+    t.appendChild(meter);
+    t.appendChild(meta);
     var badge = document.createElement('span');
-    badge.className = 'badge';
+    var st = STATUS[groupWarns[k] || 'ok'];
+    badge.className = 'badge ' + st[0];
     badge.textContent = (groups[k] || []).length + ' 个域名';
+    badge.title = st[1];
     l.appendChild(i);
     l.appendChild(t);
     l.appendChild(badge);
@@ -434,20 +559,32 @@ function highlightConf(text){
 }
 
 function render(){
-  el('output').innerHTML = highlightConf(buildConfig(selected));
+  var conf = buildConfig(selected);
+  el('output').innerHTML = highlightConf(conf);
   el('barPicked').textContent = '已选 ' + selected.size + ' 组 · ' + countSelected() + ' 个域名';
   el('stats').textContent = '$ rules --loaded ' + totalDomains() + ' domains · ' + ORDER.length + ' groups';
   el('picked').textContent = '已选 ' + selected.size + ' 组 · ' + countSelected() + ' 个域名';
+  el('kpiGroups').textContent = selected.size;
+  el('kpiDomains').textContent = totalDomains();
+  el('kpiPresets').textContent = PRESETS.length;
+  el('kpiSize').textContent = fmtSize(byteLen(conf));
   document.querySelectorAll('#rules input').forEach(function(input, n){
     input.checked = selected.has(ORDER[n]);
   });
   try{ history.replaceState(null, '', shareUrl()); }catch(e){}
 }
 
-async function copyText(s, okMsg){
+function flashCopied(btn){
+  if(!btn) return;
+  var old = btn.textContent;
+  btn.textContent = '已复制 ✓';
+  setTimeout(function(){ btn.textContent = old; }, 1600);
+}
+async function copyText(s, okMsg, btn){
   try{
     await navigator.clipboard.writeText(s);
     status(okMsg || '已复制');
+    flashCopied(btn);
   }catch(e){
     var ta = document.createElement('textarea');
     ta.value = s;
@@ -455,7 +592,7 @@ async function copyText(s, okMsg){
     ta.style.opacity = '0';
     document.body.appendChild(ta);
     ta.select();
-    try{ document.execCommand('copy'); status(okMsg || '已复制'); }
+    try{ document.execCommand('copy'); status(okMsg || '已复制'); flashCopied(btn); }
     catch(e2){ status('复制失败，请手动选择复制'); }
     document.body.removeChild(ta);
   }
@@ -473,8 +610,8 @@ el('download').addEventListener('click', function(){
   setTimeout(function(){ URL.revokeObjectURL(u); }, 1000);
   status('配置已生成，请在 Shadowrocket「配置」中导入');
 });
-el('copy').addEventListener('click', function(){ copyText(shareUrl(), '已复制分享网址'); });
-el('copyconf').addEventListener('click', function(){ copyText(buildConfig(selected), '已复制配置文本'); });
+el('copy').addEventListener('click', function(){ copyText(shareUrl(), '已复制分享网址', this); });
+el('copyconf').addEventListener('click', function(){ copyText(buildConfig(selected), '已复制配置文本', this); });
 el('makeSub').addEventListener('click', function(){
   var name = el('customName').value.trim();
   if(!/^[A-Za-z0-9._-]+\.conf$/.test(name)){ status('文件名不对：只能用字母、数字、._-，且以 .conf 结尾'); return; }
@@ -484,7 +621,8 @@ el('makeSub').addEventListener('click', function(){
   el('subOut').hidden = false;
   status('订阅链接已生成，先把文件传到仓库再导入');
 });
-el('copySub').addEventListener('click', function(){ copyText(el('subRaw').textContent, '已复制远程配置地址'); });
+el('copySub').addEventListener('click', function(){ copyText(el('subRaw').textContent, '已复制远程配置地址', this); });
+el('heroCopy').addEventListener('click', function(){ copyText(rawUrl('configs/combined.conf'), '已复制订阅地址', this); });
 
 /* 供自动化测试使用，不影响页面功能。 */
 window.__rr = {
@@ -504,6 +642,12 @@ window.__rr = {
   var loaded = await loadRules();
   groups = loaded.groups;
   var warns = validateGroups(groups).concat(loadWarnings);
+  ORDER.forEach(function(k){ groupWarns[k] = (groups[k] || []).length ? 'ok' : 'empty'; });
+  warns.forEach(function(w){
+    ORDER.forEach(function(k){
+      if(groupWarns[k] === 'ok' && w.indexOf(META[k].label) !== -1) groupWarns[k] = 'warn';
+    });
+  });
   if(warns.length){
     var box = el('warnBox');
     box.hidden = false;
