@@ -323,7 +323,7 @@ a{color:var(--cyan)}
     <h3><span class="tag tag-live">实时生成</span>一键生成订阅链接</h3>
     <p class="hint">每次勾选改动后点一次，当前配置就会上传并返回一条新链接，链接里是原始配置文本，不是下载页面。</p>
     <div class="name-field"><label for="nameSuffix">配置名称后缀 <span>自动跟随勾选，可手动修改</span></label><div class="name-controls"><div class="name-input"><span class="name-prefix">RocketRules-</span><input type="text" id="nameSuffix" placeholder="例如 meta-ip" spellcheck="false" maxlength="100" aria-label="配置名称后缀"></div><button id="liveGen" class="primary">生成订阅链接</button></div></div>
-    <div class="provider-row"><button type="button" class="secondary" id="publishPst">PST.RS · 自定义名称</button><button type="button" class="secondary" id="publishRubish">RubishBin · 备用</button></div><p id="liveStatus" role="status"></p>
+    <div class="provider-row"><button type="button" class="secondary" id="publishPst">PST.RS · 自定义名称</button><button type="button" class="secondary" id="publishRubish">RubishBin · 备用（可能跨域受限）</button></div><p id="liveStatus" role="status"></p>
     <div class="sub-out" id="liveOut" hidden>
       <label>订阅链接（原始配置直链）</label>
       <code><a id="liveRaw" href="#" target="_blank" rel="noopener"></a></code>
@@ -334,7 +334,7 @@ a{color:var(--cyan)}
       <p class="warnline" id="liveStale" hidden>规则已改动，这个链接是旧快照，点「生成订阅链接」重新生成。</p>
     </div>
     <p class="fine">每次改规则都要重新点「生成订阅链接」，旧链接不会自动更新；链接是快照。</p>
-    <p class="fine">隐私：仅上传公开域名规则，不包含账号密码；第三方服务可能记录提交内容和 IP。PST.RS 自定义名称可能被占用，RubishBin 可能返回随机链接 ID。PST.RS 最长可设 1 年；RubishBin 有效期以服务端返回为准。</p>
+    <p class="fine">隐私：仅上传公开域名规则，不包含账号密码；第三方服务可能记录提交内容和 IP。PST.RS 自定义名称可能被占用，RubishBin 可能返回随机链接 ID。订阅按约 30 天使用；实际有效期以第三方服务为准。</p>
   </div>
 
 
@@ -680,7 +680,7 @@ async function uploadLive(provider){
     if(provider === 'rubish'){
       res = await fetch(RUBISH_API,{
         method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({title:name+'.conf',content:conf,language:'text',slug:name,expires:'never',expiry:'never'}),
+        body:JSON.stringify({title:name+'.conf',content:conf,language:'text',slug:name,expires:'30d',expiry:'30d'}),
         signal:ac.signal
       });
       if(!res.ok) throw new Error('RubishBin HTTP '+res.status);
@@ -693,7 +693,7 @@ async function uploadLive(provider){
     }else{
       res = await fetch(PST_API,{
         method:'POST',
-        headers:{'Content-Type':'text/plain;charset=UTF-8','Accept':'application/json','X-Paste-Title':name+'.conf','X-Paste-ID':name.slice(0,64),'X-Paste-TTL':'1y'},
+        headers:{'Content-Type':'text/plain;charset=UTF-8','Accept':'application/json','X-Paste-Title':name+'.conf','X-Paste-ID':name.slice(0,64),'X-Paste-TTL':'30d'},
         body:conf,signal:ac.signal
       });
       if(!res.ok) throw new Error('PST.RS HTTP '+res.status+(res.status===409?'（名称可能已被占用）':''));
@@ -709,10 +709,10 @@ async function uploadLive(provider){
     el('liveImport').href = importUrl(url.href);
     el('liveOut').hidden = false;
     el('liveStale').hidden = true;
-    setLiveStatus('已生成 '+name+'.conf · '+(provider==='rubish'?'RubishBin（有效期以服务端为准）':'PST.RS（最长 1 年）')+'，请验证 Shadowrocket 导入');
+    setLiveStatus('已生成 '+name+'.conf · '+(provider==='rubish'?'RubishBin（有效期以服务端为准）':'PST.RS（请求保留 30 天）')+'，请验证 Shadowrocket 导入');
     status('订阅链接已生成');
   }catch(e){
-    setLiveStatus('生成失败 ['+(provider==='rubish'?'RubishBin':'PST.RS')+']：'+(e.name==='AbortError'?'请求超时':e instanceof TypeError?'网络请求被阻止（可能是 CORS 跨域限制或网络连接失败）':e.message)+'。可换另一服务，或下载 .conf 手动导入。',true);
+    setLiveStatus('生成失败 ['+(provider==='rubish'?'RubishBin':'PST.RS')+']：'+(e.name==='AbortError'?'请求超时':e instanceof TypeError?'浏览器无法连接上传接口（常见原因是服务不允许跨域 CORS；网页端无法绕过），请改试 PST.RS':e.message)+'。可换另一服务，或下载 .conf 手动导入。',true);
   }finally{
     clearTimeout(timer);
     buttons.forEach(function(b){ b.disabled=false; });
