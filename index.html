@@ -334,7 +334,7 @@ a{color:var(--cyan)}
       <p class="warnline" id="liveStale" hidden>规则已改动，这个链接是旧快照，点「生成订阅链接」重新生成。</p>
     </div>
     <p class="fine">每次改规则都要重新点「生成订阅链接」，旧链接不会自动更新；链接是快照。</p>
-    <p class="fine">隐私：仅上传公开域名规则，不包含账号密码；第三方服务可能记录提交内容和 IP。PST.RS 自定义名称可能被占用，RubishBin 可能返回随机链接 ID。</p>
+    <p class="fine">隐私：仅上传公开域名规则，不包含账号密码；第三方服务可能记录提交内容和 IP。PST.RS 自定义名称可能被占用，RubishBin 可能返回随机链接 ID。PST.RS 最长可设 1 年；RubishBin 有效期以服务端返回为准。</p>
   </div>
 
 
@@ -413,7 +413,7 @@ var groups = null;
 var groupWarns = {};
 var loadWarnings = [];
 var PASTEBIN_API = 'https://freepastebin.com/api/pastes';
-var PST_API = 'https://paster.abhicracker.com/';
+var PST_API = 'https://pstrs.abhicracker.com/';
 var RUBISH_API = 'https://www.rubish.click/x/create';
 var liveSnapshot = null;
 var query = new URLSearchParams(location.search);
@@ -680,20 +680,20 @@ async function uploadLive(provider){
     if(provider === 'rubish'){
       res = await fetch(RUBISH_API,{
         method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({title:name+'.conf',content:conf,language:'text',slug:name}),
+        body:JSON.stringify({title:name+'.conf',content:conf,language:'text',slug:name,expires:'never',expiry:'never'}),
         signal:ac.signal
       });
       if(!res.ok) throw new Error('RubishBin HTTP '+res.status);
       data = await res.json();
-      var item = data.paste || data.data || data;
-      var id = item.id || item.slug || item.paste_id;
-      raw = item.raw_url || item.rawUrl || item.raw;
+      var item = data.paste || data.data || data.result || data;
+      var id = item.id || item.slug || item.paste_id || item.pasteId;
+      raw = item.raw_url || item.rawUrl || item.raw || data.raw_url || data.rawUrl;
       if(!raw && id) raw = 'https://www.rubish.click/x/raw/' + encodeURIComponent(id);
       if(!raw) throw new Error('RubishBin 没有返回原始文本地址');
     }else{
       res = await fetch(PST_API,{
         method:'POST',
-        headers:{'Content-Type':'text/plain;charset=UTF-8','Accept':'application/json','X-Paste-Title':name+'.conf','X-Paste-ID':name.slice(0,64)},
+        headers:{'Content-Type':'text/plain;charset=UTF-8','Accept':'application/json','X-Paste-Title':name+'.conf','X-Paste-ID':name.slice(0,64),'X-Paste-TTL':'1y'},
         body:conf,signal:ac.signal
       });
       if(!res.ok) throw new Error('PST.RS HTTP '+res.status+(res.status===409?'（名称可能已被占用）':''));
@@ -709,10 +709,10 @@ async function uploadLive(provider){
     el('liveImport').href = importUrl(url.href);
     el('liveOut').hidden = false;
     el('liveStale').hidden = true;
-    setLiveStatus('已生成 '+name+'.conf · '+(provider==='rubish'?'RubishBin':'PST.RS')+'（请在 Shadowrocket 中验证导入）');
+    setLiveStatus('已生成 '+name+'.conf · '+(provider==='rubish'?'RubishBin（有效期以服务端为准）':'PST.RS（最长 1 年）')+'，请验证 Shadowrocket 导入');
     status('订阅链接已生成');
   }catch(e){
-    setLiveStatus('生成失败：'+(e.name==='AbortError'?'请求超时':e.message)+'。可换另一服务，或下载 .conf 手动导入。',true);
+    setLiveStatus('生成失败 ['+(provider==='rubish'?'RubishBin':'PST.RS')+']：'+(e.name==='AbortError'?'请求超时':e instanceof TypeError?'网络请求被阻止（可能是 CORS 跨域限制或网络连接失败）':e.message)+'。可换另一服务，或下载 .conf 手动导入。',true);
   }finally{
     clearTimeout(timer);
     buttons.forEach(function(b){ b.disabled=false; });
