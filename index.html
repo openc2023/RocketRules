@@ -316,7 +316,7 @@ a{color:var(--cyan)}
   <div class="sec-head">
     <code class="cmd">$ publish</code>
     <h2>把自选配置变成订阅链接</h2>
-    <p class="hint">点一下就把当前生成的配置传到匿名文本服务，立刻得到一个能直接导入 Shadowrocket 的原始文本直链；也可以走下面的固定配置流程。</p>
+    <p class="hint">点一下就把当前生成的配置传到匿名文本服务，立刻得到一个能直接导入 Shadowrocket 的原始文本直链。</p>
   </div>
 
   <div>
@@ -334,31 +334,10 @@ a{color:var(--cyan)}
       <p class="warnline" id="liveStale" hidden>规则已改动，这个链接是旧快照，点「生成订阅链接」重新生成。</p>
     </div>
     <p class="fine">每次改规则都要重新点「生成订阅链接」，旧链接不会自动更新；链接是快照。</p>
-    <p class="fine">隐私：配置只含公开域名列表，不含账号密码；但 FreePastebin 会记录提交内容和 IP，介意的话请用下面的固定配置（备用）方案。</p>
+    <p class="fine">隐私：配置只含公开域名列表，不含账号密码；但 FreePastebin 可能记录提交内容和 IP。</p>
   </div>
 
-  <div class="sub-block">
-    <h3><span class="tag tag-fixed">固定配置（备用）</span>GitHub Raw 订阅</h3>
-    <p class="hint">想长期用一个固定链接订阅，需要先把文件传到仓库的 configs/ 文件夹。</p>
-    <ol class="steps">
-      <li>点「下载 .conf」把文件存到手机</li>
-      <li>打开 GitHub 仓库 → configs 文件夹 → Add file → Upload files，上传刚才的文件</li>
-      <li>回到这里点「一键导入」，或复制下面的远程配置地址，到 Shadowrocket「配置」→ + → 粘贴 → Download</li>
-    </ol>
-    <div class="row">
-      <input type="text" id="customName" value="rocketrules-custom.conf" spellcheck="false" aria-label="自定义配置文件名">
-      <button id="makeSub" class="secondary">生成固定订阅链接</button>
-    </div>
-    <div class="sub-out" id="subOut" hidden>
-      <label>远程配置地址</label>
-      <code id="subRaw"></code>
-      <div class="row">
-        <a class="btn primary" id="subImport" href="#">一键导入 Shadowrocket</a>
-        <button class="secondary" id="copySub">复制远程配置地址</button>
-      </div>
-      <p class="warnline">没上传之前这个地址是 404，导入会失败；传完再点。</p>
-    </div>
-  </div>
+
 </section>
 
 <section class="panel" id="sec-presets">
@@ -718,8 +697,8 @@ async function uploadLive(){
     status('订阅链接已生成');
   }catch(e){
     var msg;
-    if(e && e.name === 'AbortError') msg = '上传超时（15 秒），请检查网络后重试。也可以先下载 .conf 文件手动上传，或走下面的固定配置（备用）。';
-    else msg = '上传失败：' + (e && e.message ? e.message : '未知错误') + '。可以先下载 .conf 文件手动上传，或走下面的固定配置（备用）。';
+    if(e && e.name === 'AbortError') msg = '上传超时（15 秒），请检查网络后重试。也可以下载 .conf 文件手动导入。';
+    else msg = '上传失败：' + (e && e.message ? e.message : '未知错误') + '。可以下载 .conf 文件手动导入。';
     setLiveStatus(msg, true);
   }finally{
     if(timer && typeof clearTimeout === 'function') clearTimeout(timer);
@@ -743,16 +722,6 @@ el('download').addEventListener('click', function(){
 });
 el('copy').addEventListener('click', function(){ copyText(shareUrl(), '已复制分享网址', this); });
 el('copyconf').addEventListener('click', function(){ copyText(buildConfig(selected), '已复制配置文本', this); });
-el('makeSub').addEventListener('click', function(){
-  var name = el('customName').value.trim();
-  if(!/^[A-Za-z0-9._-]+\.conf$/.test(name)){ status('文件名不对：只能用字母、数字、._-，且以 .conf 结尾'); return; }
-  var raw = rawUrl('configs/' + name);
-  el('subRaw').textContent = raw;
-  el('subImport').href = importUrl(raw);
-  el('subOut').hidden = false;
-  status('订阅链接已生成，先把文件传到仓库再导入');
-});
-el('copySub').addEventListener('click', function(){ copyText(el('subRaw').textContent, '已复制远程配置地址', this); });
 el('liveGen').addEventListener('click', uploadLive);
 el('copyLive').addEventListener('click', function(){ copyText(el('liveRaw').textContent, '已复制订阅链接', this); });
 el('heroCopy').addEventListener('click', function(){ copyText(rawUrl('configs/combined.conf'), '已复制订阅地址', this); });
