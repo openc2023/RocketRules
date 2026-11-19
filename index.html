@@ -157,8 +157,10 @@ button:active,.btn:active{transform:translateY(3px);box-shadow:0 0 0 rgba(0,0,0,
 .primary:hover{border-color:var(--accent)}
 .secondary{background:var(--card);color:var(--ink)}
 .picked{color:var(--muted);font-size:14px}
-#status{color:var(--accent);min-height:1.4em;margin:10px 0 6px;font-size:14px}
-#status::before{content:"> ";color:var(--muted)}
+#status,#liveStatus{color:var(--accent);min-height:1.4em;margin:10px 0 6px;font-size:14px}
+#status::before,#liveStatus::before{content:"> ";color:var(--muted)}
+#liveStatus.err{color:var(--red)}
+#liveStatus.err::before{content:"[!] ";color:var(--red)}
 /* ---- 深色语法高亮代码块 ---- */
 .codeblock{width:100%;max-height:340px;overflow:auto;margin:0;background:var(--code-bg);color:var(--code-ink);border:1px solid #22301f;border-radius:10px;padding:14px;font-family:var(--mono);font-size:12px;line-height:1.7;white-space:pre}
 .codeblock:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -189,6 +191,13 @@ code{font-family:var(--mono);overflow-wrap:anywhere}
 .sub-out label{font-size:13px;color:var(--muted)}
 .sub-out code{display:block;background:var(--code-bg);border:1px solid #22301f;border-radius:8px;padding:10px;margin:8px 0;font-family:var(--mono);font-size:12px;color:#7dd3fc}
 .warnline{color:var(--amber);font-size:13px}
+.sub-block{border-top:1px dashed var(--line);padding-top:18px;margin-top:20px}
+#sec-publish h3{font-size:16px;margin:0 0 6px;color:var(--ink)}
+.tag{display:inline-block;font-family:var(--mono);font-size:11px;font-weight:700;border-radius:6px;padding:2px 8px;margin-right:6px;vertical-align:1px}
+.tag-live{color:var(--accent);background:var(--accent-soft);border:1px solid var(--accent-line)}
+.tag-fixed{color:var(--muted);background:var(--card-soft);border:1px solid var(--line)}
+.fine{color:var(--muted);font-size:13px;margin:8px 0 0}
+#liveOut code a{color:#7dd3fc;text-decoration:none}
 footer{color:var(--muted);font-size:13px;text-align:center;margin-top:24px}
 footer .eof{font-family:var(--mono);font-size:12px;margin:0 0 6px}
 footer p{margin:0}
@@ -276,25 +285,50 @@ a{color:var(--cyan)}
   <div class="sec-head">
     <code class="cmd">$ publish</code>
     <h2>把自选配置变成订阅链接</h2>
-    <p class="hint">上面生成的配置是下载到手机里的文件，Shadowrocket 没法直接从网页里抓它。想长期用一个固定链接订阅，需要先把文件传到仓库的 configs/ 文件夹。</p>
+    <p class="hint">点一下就把当前生成的配置传到匿名文本服务，立刻得到一个能直接导入 Shadowrocket 的原始文本直链；也可以走下面的固定配置流程。</p>
   </div>
-  <ol class="steps">
-    <li>点「下载 .conf」把文件存到手机</li>
-    <li>打开 GitHub 仓库 → configs 文件夹 → Add file → Upload files，上传刚才的文件</li>
-    <li>回到这里点「一键导入」，或复制下面的远程配置地址，到 Shadowrocket「配置」→ + → 粘贴 → Download</li>
-  </ol>
-  <div class="row">
-    <input type="text" id="customName" value="rocketrules-custom.conf" spellcheck="false" aria-label="自定义配置文件名">
-    <button id="makeSub" class="secondary">生成订阅链接</button>
-  </div>
-  <div class="sub-out" id="subOut" hidden>
-    <label>远程配置地址</label>
-    <code id="subRaw"></code>
+
+  <div>
+    <h3><span class="tag tag-live">实时生成</span>一键生成订阅链接</h3>
+    <p class="hint">每次勾选改动后点一次，当前配置就会上传并返回一条新链接，链接里是原始配置文本，不是下载页面。</p>
     <div class="row">
-      <a class="btn primary" id="subImport" href="#">一键导入 Shadowrocket</a>
-      <button class="secondary" id="copySub">复制远程配置地址</button>
+      <button id="liveGen" class="primary">生成订阅链接</button>
     </div>
-    <p class="warnline">没上传之前这个地址是 404，导入会失败；传完再点。</p>
+    <p id="liveStatus" role="status"></p>
+    <div class="sub-out" id="liveOut" hidden>
+      <label>订阅链接（原始配置直链）</label>
+      <code><a id="liveRaw" href="#" target="_blank" rel="noopener"></a></code>
+      <div class="row">
+        <a class="btn primary" id="liveImport" href="#">一键导入 Shadowrocket</a>
+        <button class="secondary" id="copyLive">复制订阅链接</button>
+      </div>
+      <p class="warnline" id="liveStale" hidden>规则已改动，这个链接是旧快照，点「生成订阅链接」重新生成。</p>
+    </div>
+    <p class="fine">每次改规则都要重新点「生成订阅链接」，旧链接不会自动更新；链接是快照。</p>
+    <p class="fine">隐私：配置只含公开域名列表，不含账号密码；但 FreePastebin 会记录提交内容和 IP，介意的话请用下面的固定配置（备用）方案。</p>
+  </div>
+
+  <div class="sub-block">
+    <h3><span class="tag tag-fixed">固定配置（备用）</span>GitHub Raw 订阅</h3>
+    <p class="hint">想长期用一个固定链接订阅，需要先把文件传到仓库的 configs/ 文件夹。</p>
+    <ol class="steps">
+      <li>点「下载 .conf」把文件存到手机</li>
+      <li>打开 GitHub 仓库 → configs 文件夹 → Add file → Upload files，上传刚才的文件</li>
+      <li>回到这里点「一键导入」，或复制下面的远程配置地址，到 Shadowrocket「配置」→ + → 粘贴 → Download</li>
+    </ol>
+    <div class="row">
+      <input type="text" id="customName" value="rocketrules-custom.conf" spellcheck="false" aria-label="自定义配置文件名">
+      <button id="makeSub" class="secondary">生成固定订阅链接</button>
+    </div>
+    <div class="sub-out" id="subOut" hidden>
+      <label>远程配置地址</label>
+      <code id="subRaw"></code>
+      <div class="row">
+        <a class="btn primary" id="subImport" href="#">一键导入 Shadowrocket</a>
+        <button class="secondary" id="copySub">复制远程配置地址</button>
+      </div>
+      <p class="warnline">没上传之前这个地址是 404，导入会失败；传完再点。</p>
+    </div>
   </div>
 </section>
 
@@ -361,6 +395,8 @@ var PRESETS = [
 var groups = null;
 var groupWarns = {};
 var loadWarnings = [];
+var PASTEBIN_API = 'https://freepastebin.com/api/pastes';
+var liveSnapshot = null;
 var query = new URLSearchParams(location.search);
 var selected = new Set(
   query.has('r')
@@ -568,6 +604,7 @@ function render(){
   el('kpiDomains').textContent = totalDomains();
   el('kpiPresets').textContent = PRESETS.length;
   el('kpiSize').textContent = fmtSize(byteLen(conf));
+  if(liveSnapshot !== null && !el('liveOut').hidden) el('liveStale').hidden = (conf === liveSnapshot);
   document.querySelectorAll('#rules input').forEach(function(input, n){
     input.checked = selected.has(ORDER[n]);
   });
@@ -598,6 +635,56 @@ async function copyText(s, okMsg, btn){
   }
 }
 
+function setLiveStatus(msg, isErr){
+  var s = el('liveStatus');
+  s.textContent = msg;
+  s.className = isErr ? 'err' : '';
+}
+
+/* 实时生成：把当前 .conf 上传到 FreePastebin，返回原始文本直链。
+ * 单条上限 1 MiB，.conf 只有几 KB；expires_at 为 null，即无过期时间。 */
+async function uploadLive(){
+  var btn = el('liveGen');
+  var conf = buildConfig(selected);
+  btn.disabled = true;
+  var old = btn.textContent;
+  btn.textContent = '上传中…';
+  setLiveStatus('');
+  var ac = null, timer = 0;
+  try{
+    if(typeof AbortController !== 'undefined'){
+      ac = new AbortController();
+      timer = setTimeout(function(){ ac.abort(); }, 15000);
+    }
+    var res = await fetch(PASTEBIN_API, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({content: conf}),
+      signal: ac ? ac.signal : undefined
+    });
+    if(!res.ok) throw new Error('接口返回 HTTP ' + res.status);
+    var data = await res.json();
+    if(!data || !data.raw_url) throw new Error('接口没有返回订阅链接');
+    liveSnapshot = conf;
+    el('liveRaw').textContent = data.raw_url;
+    el('liveRaw').href = data.raw_url;
+    el('liveImport').href = importUrl(data.raw_url);
+    el('liveOut').hidden = false;
+    el('liveStale').hidden = true;
+    setLiveStatus('订阅链接已生成，可直接导入 Shadowrocket');
+    status('订阅链接已生成');
+  }catch(e){
+    var msg;
+    if(e && e.name === 'AbortError') msg = '上传超时（15 秒），请检查网络后重试。也可以先下载 .conf 文件手动上传，或走下面的固定配置（备用）。';
+    else msg = '上传失败：' + (e && e.message ? e.message : '未知错误') + '。可以先下载 .conf 文件手动上传，或走下面的固定配置（备用）。';
+    setLiveStatus(msg, true);
+  }finally{
+    if(timer && typeof clearTimeout === 'function') clearTimeout(timer);
+    btn.disabled = false;
+    btn.textContent = old;
+  }
+}
+
 el('all').addEventListener('click', function(){ ORDER.forEach(function(k){ selected.add(k); }); render(); });
 el('none').addEventListener('click', function(){ selected.clear(); render(); });
 el('download').addEventListener('click', function(){
@@ -622,6 +709,8 @@ el('makeSub').addEventListener('click', function(){
   status('订阅链接已生成，先把文件传到仓库再导入');
 });
 el('copySub').addEventListener('click', function(){ copyText(el('subRaw').textContent, '已复制远程配置地址', this); });
+el('liveGen').addEventListener('click', uploadLive);
+el('copyLive').addEventListener('click', function(){ copyText(el('liveRaw').textContent, '已复制订阅链接', this); });
 el('heroCopy').addEventListener('click', function(){ copyText(rawUrl('configs/combined.conf'), '已复制订阅地址', this); });
 
 /* 供自动化测试使用，不影响页面功能。 */
@@ -631,6 +720,8 @@ window.__rr = {
   validateGroups: validateGroups,
   importUrl: importUrl,
   rawUrl: rawUrl,
+  uploadLive: uploadLive,
+  PASTEBIN_API: PASTEBIN_API,
   META: META,
   ORDER: ORDER,
   PRESETS: PRESETS,
