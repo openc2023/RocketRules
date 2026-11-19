@@ -292,7 +292,7 @@ a{color:var(--cyan)}
     <h3><span class="tag tag-live">实时生成</span>一键生成订阅链接</h3>
     <p class="hint">每次勾选改动后点一次，当前配置就会上传并返回一条新链接，链接里是原始配置文本，不是下载页面。</p>
     <div class="row">
-      <button id="liveGen" class="primary">生成订阅链接</button>
+      <label for="nameSuffix">配置名称后缀（默认按已选规则自动生成，可修改）</label><input type="text" id="nameSuffix" placeholder="例如 meta-ip" spellcheck="false" maxlength="100" aria-label="配置名称后缀"><button id="liveGen" class="primary">生成订阅链接</button>
     </div>
     <p id="liveStatus" role="status"></p>
     <div class="sub-out" id="liveOut" hidden>
@@ -464,8 +464,12 @@ async function loadRules(){
   }
 }
 
+function autoSuffix(sel){ return ORDER.filter(function(k){return sel.has(k);}).join('-') || 'direct'; }
+function configName(){ var suffix = el('nameSuffix').value.trim().replace(/[^A-Za-z0-9_-]/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,''); return 'RocketRules-' + (suffix || autoSuffix(selected)); }
+function syncSuffix(){ if(el('nameSuffix').dataset.custom !== 'yes') el('nameSuffix').value = autoSuffix(selected); }
 function buildConfig(sel){
   var a = [
+    '# ' + configName(),
     '# RocketRules generated config',
     '# Selected: ' + Array.from(sel).join(', '),
     '# https://github.com/' + REPO,
@@ -595,6 +599,7 @@ function highlightConf(text){
 }
 
 function render(){
+  syncSuffix();
   var conf = buildConfig(selected);
   el('output').innerHTML = highlightConf(conf);
   el('barPicked').textContent = '已选 ' + selected.size + ' 组 · ' + countSelected() + ' 个域名';
@@ -659,7 +664,7 @@ async function uploadLive(){
     var res = await fetch(PASTEBIN_API, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({content: conf}),
+      body: JSON.stringify({content: conf, title: configName()}),
       signal: ac ? ac.signal : undefined
     });
     if(!res.ok) throw new Error('接口返回 HTTP ' + res.status);
@@ -685,6 +690,7 @@ async function uploadLive(){
   }
 }
 
+el('nameSuffix').addEventListener('input', function(){ this.dataset.custom = this.value.trim() ? 'yes' : 'no'; render(); });
 el('all').addEventListener('click', function(){ ORDER.forEach(function(k){ selected.add(k); }); render(); });
 el('none').addEventListener('click', function(){ selected.clear(); render(); });
 el('download').addEventListener('click', function(){
@@ -692,7 +698,7 @@ el('download').addEventListener('click', function(){
   var u = URL.createObjectURL(blob);
   var a = document.createElement('a');
   a.href = u;
-  a.download = 'RocketRules.conf';
+  a.download = configName() + '.conf';
   a.click();
   setTimeout(function(){ URL.revokeObjectURL(u); }, 1000);
   status('配置已生成，请在 Shadowrocket「配置」中导入');
