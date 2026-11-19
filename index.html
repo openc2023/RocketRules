@@ -339,8 +339,8 @@ a{color:var(--cyan)}
       <p class="warnline" id="liveStale" hidden>规则已改动，这个链接是旧快照，点「生成订阅链接」重新生成。</p>
     </div>
     <p class="fine">每次改规则都要重新点「生成订阅链接」，旧链接不会自动更新；链接是快照。</p>
-    <p class="fine">隐私：仅上传公开域名规则，不包含账号密码；第三方服务可能记录提交内容和 IP。主服务 FreePastebin 无过期时间，配置名存在标题里、链接里也带名字；paste.gg 匿名贴 7 天过期，适合临时分享，长期用走 FreePastebin；PST.RS 请求保留 30 天，自定义名称可能被占用；RubishBin 按 30 天请求，实际有效期以第三方服务为准。</p>
-    <p class="fine">订阅链接是 is.gd 短链，名字在链接路径里；is.gd 别名只支持小写字母、数字和下划线，所以链接里没有 .conf 结尾；原直链在下方标为备用。短链名被占用时会试一次加 _2 的名字，再不行就用直链。</p>
+    <p class="fine">隐私：仅上传公开域名规则，不包含账号密码；第三方服务可能记录提交内容和 IP。主服务 FreePastebin 无过期时间，配置名存在标题里、链接里也带名字；paste.gg 匿名贴 7 天过期，适合临时分享，长期用走 FreePastebin；PST.RS 请求保留 7 天，自定义名称可能被占用；RubishBin 按 7 天请求，实际有效期以第三方服务为准。</p>
+    <p class="fine">订阅链接是 is.gd 短链，名字在链接路径里；is.gd 别名只支持小写字母、数字和下划线，所以链接里没有 .conf 结尾；原直链在下方标为备用。短链名被占用时会顺延试 _2、_3……一直到有空的名字，超时还没拿到就用直链。</p>
   </div>
 
 
@@ -677,7 +677,7 @@ function setLiveStatus(msg, isErr){
  * 返回 raw_url，expires_at 为 null（无过期时间）；直链后拼 ?name= 配置名，
  * 名字存在标题里，链接里也带名字。备选 paste.gg（匿名贴 7 天过期，
  * 直链格式 /v1/pastes/{id}/files/{fileId}/raw）、PST.RS（自定义头，
- * 请求保留 30 天）与 RubishBin（30 天）可能跨域受限。
+ * 请求保留 7 天）与 RubishBin（7 天）可能跨域受限。
  * FreePastebin / paste.gg 生成成功后，再用 is.gd 生成一条命名短链
  * （GET create.php，无预检）：名字放进链接路径里，主显短链，
  * 原直链在下方标为备用；PST.RS / RubishBin 的链接里本来就有
@@ -694,23 +694,27 @@ function shortSlug(name){
 }
 
 /* 给一条直链生成 is.gd 命名短链。成功返回 {url, taken:false}；
- * 别名被占时只试一次加 _2 的后缀，再失败返回 {url:null, taken:true}；
+ * 别名被占时顺延试 _2、_3……一直到拿到空名字，没有上限；
+ * 兜底是上传的 18 秒超时：每次重试前检查 signal.aborted，被取消
+ * 就停，返回 {url:null, taken:true}（调用方回落直链并提示名被占用）；
  * 网络失败等其他情况不重试，返回 {url:null, taken:false}；
- * 超时（AbortError）向上抛，由调用方回落直链。 */
+ * 中途被取消（AbortError）也返回 {url:null, taken:true}。
+ * 循环里不加人为延迟，网络往返本身就是节流。 */
 async function makeShortLink(longUrl, name, signal){
   var base = shortSlug(name);
-  var tries = [base, base.slice(0, 28) + '_2'];
-  var taken = false;
-  for(var i = 0; i < tries.length; i++){
+  var n = 0, taken = false;
+  for(;;){
+    if(signal && signal.aborted) break;
+    var alias = n === 0 ? base : base.slice(0, 28).replace(/_+$/, '') + '_' + (n + 1);
     try{
-      var res = await fetch(ISGD_API + '?format=json&url=' + encodeURIComponent(longUrl) + '&shorturl=' + encodeURIComponent(tries[i]), {signal: signal});
+      var res = await fetch(ISGD_API + '?format=json&url=' + encodeURIComponent(longUrl) + '&shorturl=' + encodeURIComponent(alias), {signal: signal});
       if(!res.ok) break;
       var data = await res.json();
       if(data && data.shorturl) return {url: data.shorturl, taken: false};
-      if(data && data.errorcode === 2){ taken = true; continue; }
+      if(data && data.errorcode === 2){ taken = true; n++; continue; }
       break;
     }catch(e){
-      if(e && e.name === 'AbortError') throw e;
+      if(e && e.name === 'AbortError') return {url: null, taken: true};
       break;
     }
   }
@@ -745,7 +749,7 @@ async function uploadLive(provider){
     if(provider === 'rubish'){
       res = await fetch(RUBISH_API,{
         method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({title:name+'.conf',content:conf,language:'text',slug:name,expires:'30d',expiry:'30d'}),
+        body:JSON.stringify({title:name+'.conf',content:conf,language:'text',slug:name,expires:'7d',expiry:'7d'}),
         signal:ac.signal
       });
       if(!res.ok) throw new Error('RubishBin HTTP '+res.status);
@@ -758,7 +762,7 @@ async function uploadLive(provider){
     }else if(provider === 'pst'){
       res = await fetch(PST_API,{
         method:'POST',
-        headers:{'Content-Type':'text/plain;charset=UTF-8','Accept':'application/json','X-Paste-Title':name+'.conf','X-Paste-ID':name.slice(0,64),'X-Paste-TTL':'30d'},
+        headers:{'Content-Type':'text/plain;charset=UTF-8','Accept':'application/json','X-Paste-Title':name+'.conf','X-Paste-ID':name.slice(0,64),'X-Paste-TTL':'7d'},
         body:conf,signal:ac.signal
       });
       if(!res.ok) throw new Error('PST.RS HTTP '+res.status+(res.status===409?'（名称可能已被占用）':''));
@@ -814,7 +818,7 @@ async function uploadLive(provider){
     el('liveShortNote').hidden = !shortNote;
     el('liveOut').hidden = false;
     el('liveStale').hidden = true;
-    setLiveStatus('已生成 '+name+'.conf · '+(provider==='rubish'?'RubishBin（有效期以服务端为准）':provider==='pst'?'PST.RS（请求保留 30 天）':provider==='pastegg'?'paste.gg（匿名贴 7 天过期，短链路径里带名字）':'FreePastebin（无过期时间，短链路径里带名字）')+'，请验证 Shadowrocket 导入');
+    setLiveStatus('已生成 '+name+'.conf · '+(provider==='rubish'?'RubishBin（请求保留 7 天）':provider==='pst'?'PST.RS（请求保留 7 天）':provider==='pastegg'?'paste.gg（匿名贴 7 天过期，短链路径里带名字）':'FreePastebin（无过期时间，短链路径里带名字）')+'，请验证 Shadowrocket 导入');
     status('订阅链接已生成');
   }catch(e){
     /* 被取代的那次不写失败状态；只有当前这次的失败才写（包括自己的 18 秒超时）。 */
