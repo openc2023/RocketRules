@@ -717,17 +717,29 @@ async function makeShortLink(longUrl, name, signal){
   return {url: null, taken: taken};
 }
 
+/* 实时生成的当前上传：一次只允许一个在传。点另一个服务按钮时，
+ * 先取消上一次的上传（AbortController），再开始新的；被取消的那次
+ * 不写结果、不写状态。liveSeq 是每次上传的序号，用来识别哪次是当前这次；
+ * liveBtn 是当前这次点的按钮。按钮只禁用本次点的那一个，其他三个保持可点。 */
+var liveSeq = 0, liveAc = null, liveBtn = null;
+
 async function uploadLive(provider){
   provider = provider || 'free';
   var btn = provider === 'rubish' ? el('publishRubish') : provider === 'pst' ? el('publishPst') : provider === 'pastegg' ? el('publishPastegg') : el('liveGen');
   var conf = buildConfig(selected), name = configName();
-  var buttons = [el('liveGen'),el('publishPst'),el('publishRubish'),el('publishPastegg')];
   var pName = provider === 'rubish' ? 'RubishBin' : provider === 'pst' ? 'PST.RS' : provider === 'pastegg' ? 'paste.gg' : 'FreePastebin';
-  buttons.forEach(function(b){ b.disabled = true; });
-  var oldText = btn.textContent;
+  /* 有上一次还在传的，先取消它。 */
+  if(liveAc) liveAc.abort();
+  var mySeq = ++liveSeq;
+  /* 只禁用本次点的按钮；其他三个服务按钮保持可点。按钮原文本只记第一次，
+   * 避免同按钮连续点两次时把“上传中…”当成原文本记下来。 */
+  if(!btn.dataset.origText) btn.dataset.origText = btn.textContent;
+  var oldText = btn.dataset.origText;
+  btn.disabled = true;
   btn.textContent = '上传中…';
   setLiveStatus('正在上传到 ' + pName + '…');
   var ac = new AbortController(), timer = setTimeout(function(){ ac.abort(); }, 18000);
+  liveAc = ac; liveBtn = btn;
   try{
     var res, data, raw;
     if(provider === 'rubish'){
@@ -780,6 +792,7 @@ async function uploadLive(provider){
     if(url.protocol !== 'https:') throw new Error('服务未返回安全的 HTTPS 地址');
     var directUrl = url.href, shortNote = '';
     if(provider === 'free' || provider === 'pastegg'){
+      if(mySeq === liveSeq) setLiveStatus('正在生成短链…');
       try{
         var short = await makeShortLink(url.href, name, ac.signal);
         if(short.url) url = new URL(short.url);
@@ -788,6 +801,8 @@ async function uploadLive(provider){
         shortNote = '短链生成失败，已用直链。';
       }
     }
+    /* 已被后一次上传取代：不写结果、不写状态，直接退出（finally 恢复自己的按钮）。 */
+    if(mySeq !== liveSeq) return;
     liveSnapshot = conf;
     el('liveRaw').textContent = url.href;
     el('liveRaw').href = url.href;
@@ -802,13 +817,19 @@ async function uploadLive(provider){
     setLiveStatus('已生成 '+name+'.conf · '+(provider==='rubish'?'RubishBin（有效期以服务端为准）':provider==='pst'?'PST.RS（请求保留 30 天）':provider==='pastegg'?'paste.gg（匿名贴 7 天过期，短链路径里带名字）':'FreePastebin（无过期时间，短链路径里带名字）')+'，请验证 Shadowrocket 导入');
     status('订阅链接已生成');
   }catch(e){
+    /* 被取代的那次不写失败状态；只有当前这次的失败才写（包括自己的 18 秒超时）。 */
+    if(mySeq !== liveSeq) return;
     var reason = e.name==='AbortError' ? '请求超时' : e instanceof TypeError ? '浏览器无法连接上传接口（常见原因是服务不允许跨域 CORS；网页端无法绕过）' : e.message;
     var advice = provider==='free' ? '可改试 PST.RS 或 RubishBin（页面下方按钮），或下载 .conf 手动导入' : '可改试主按钮 FreePastebin，或下载 .conf 手动导入';
     setLiveStatus('生成失败 ['+pName+']：'+reason+'。'+advice+'。',true);
   }finally{
     clearTimeout(timer);
-    btn.textContent = oldText;
-    buttons.forEach(function(b){ b.disabled=false; });
+    /* 只恢复本次自己的按钮：如果按钮已被后一次同一按钮的上传接管，就不动它。 */
+    if(liveBtn !== btn || mySeq === liveSeq){
+      btn.disabled = false;
+      btn.textContent = oldText;
+    }
+    if(mySeq === liveSeq){ liveAc = null; liveBtn = null; }
   }
 }
 
