@@ -7,78 +7,147 @@
 <style>
 :root{color-scheme:dark}
 *{box-sizing:border-box}
-body{margin:0;background:#0a0f1c;color:#e9eef9;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.6}
-.wrap{max-width:860px;margin:0 auto;padding:28px 18px 64px}
-.kicker{display:flex;align-items:center;gap:8px;font:12px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;color:#7d93b5}
-.dot{width:10px;height:10px;border-radius:50%;flex:none}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:#04070a;
+  background-image:radial-gradient(720px 320px at 50% -80px, rgba(74,222,128,.08), transparent 70%);
+  color:#d5e5d8;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  font-size:15px;line-height:1.65;
+  padding:18px 12px 72px;
+}
+/* ---- 终端窗口 ---- */
+.term{max-width:880px;margin:0 auto;background:#0a0f0c;border:1px solid #1d2b20;border-radius:14px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.55),0 0 0 1px rgba(74,222,128,.04)}
+.titlebar{display:flex;align-items:center;gap:8px;padding:11px 14px;background:#0e1510;border-bottom:1px solid #1d2b20;font-size:12px;color:#7d93b5}
+.dot{width:11px;height:11px;border-radius:50%;flex:none}
 .r{background:#ff5f57}.y{background:#febc2e}.g{background:#28c840}
-h1{font-size:clamp(30px,7vw,44px);margin:10px 0 4px;letter-spacing:-.5px}
-h1 .prompt{color:#5cbcf5;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
-.sub{color:#aab8d0;margin:0 0 8px}
-.stats{font:13px ui-monospace,SFMono-Regular,Menlo,monospace;color:#7fd6a4;margin:0}
-.panel{background:#101828;border:1px solid #22314d;border-radius:16px;padding:20px;margin:20px 0}
-h2{font-size:19px;margin:0 0 6px}
-h2 .num{font:13px ui-monospace,SFMono-Regular,Menlo,monospace;color:#5cbcf5;border:1px solid #2c4a68;border-radius:6px;padding:2px 7px;margin-right:8px;vertical-align:2px}
-.hint{color:#9caec7;font-size:14px;margin:4px 0 14px}
+.titlebar code{color:#9fb4a6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.titlebar .tb-right{margin-left:auto;color:#5b6b5e;flex:none}
+.term-body{padding:22px 18px 26px}
+@media(min-width:640px){.term-body{padding:26px 28px 30px}}
+h1{font-size:clamp(28px,7vw,40px);margin:6px 0 6px;letter-spacing:-.5px;color:#eafff0}
+h1 .prompt{color:#4ade80}
+.cursor{display:inline-block;width:.58em;height:1.02em;background:#4ade80;vertical-align:-.12em;margin-left:3px;animation:blink 1.1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+@media (prefers-reduced-motion: reduce){.cursor{animation:none}}
+.sub{color:#9db3a4;margin:0 0 10px;max-width:62ch}
+.stats{color:#4ade80;margin:0;font-size:13px}
+.sep{color:#223626;white-space:nowrap;overflow:hidden;font-size:12px;margin:18px 0;user-select:none}
+.panel{background:#0d130e;border:1px solid #1f2d22;border-radius:12px;padding:20px}
+h2{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;font-size:17px;margin:0 0 6px;color:#eafff0}
+h2 .num{color:#4ade80;font-size:13px}
+h2 .cmd{color:#7dd3fc}
+h2 .zh{color:#9db3a4;font-size:14px;font-weight:400}
+.hint{color:#8ba392;font-size:14px;margin:4px 0 14px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
-.card{display:flex;gap:12px;align-items:flex-start;padding:14px;border:1px solid #2c3c55;border-radius:12px;cursor:pointer;background:#0d1526}
-.card:has(input:checked){background:#12283d;border-color:#5cbcf5}
-.card input{accent-color:#55bbfa;width:20px;height:20px;margin-top:2px;flex:none}
+.card{position:relative;display:flex;gap:12px;align-items:flex-start;padding:14px;border:1px solid #243526;border-radius:10px;cursor:pointer;background:#0c120d;transition:border-color .15s,background .15s}
+.card:hover{border-color:#3a5a40}
+.card:has(input:checked){background:#0f1f14;border-color:#4ade80}
+.card:has(input:checked)::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:3px;background:#4ade80}
+.card input{accent-color:#4ade80;width:20px;height:20px;margin-top:2px;flex:none}
 .card .t{flex:1;min-width:0}
-.card strong{display:block;font-size:15px}
-.card small{display:block;color:#93a5c0;font-size:13px;line-height:1.5}
-.badge{font:11px ui-monospace,SFMono-Regular,Menlo,monospace;color:#7fd6a4;border:1px solid #2c4a68;border-radius:20px;padding:2px 8px;white-space:nowrap;flex:none}
+.card strong{display:block;font-size:15px;color:#eafff0}
+.card small{display:block;color:#8ba392;font-size:13px;line-height:1.5}
+.badge{font-size:11px;color:#4ade80;border:1px solid #2c4a35;border-radius:6px;padding:2px 8px;white-space:nowrap;flex:none}
+.badge::before{content:"["}
+.badge::after{content:"]"}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px}
-button,.btn{border:0;border-radius:10px;padding:13px 18px;font-weight:700;font-size:15px;cursor:pointer;min-height:48px;text-decoration:none;display:inline-block;text-align:center;font-family:inherit}
-.primary{background:#55bbfa;color:#071626}
-.secondary{background:#22314d;color:#eaf2ff}
-button:active,.btn:active{transform:translateY(1px)}
-.picked{color:#9caec7;font-size:14px}
-#status{color:#7fd6a4;min-height:1.4em;margin:10px 0 6px}
-textarea{width:100%;height:230px;background:#0c1629;color:#bfe8ff;border:1px solid #2c3c55;border-radius:12px;padding:14px;font:12px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;resize:vertical}
-.warn{background:#2a1f0d;border:1px solid #7a5b1e;color:#ffd479;border-radius:12px;padding:12px 14px;font-size:14px;margin-top:14px}
-.src{color:#7d93b5;font-size:13px;margin:10px 0 0}
+/* ---- 键盘按键风格按钮 ---- */
+button,.btn{
+  border:1px solid #2c3f31;border-radius:8px;
+  background:linear-gradient(#182218,#121a13);color:#d7f5e3;
+  padding:12px 16px;font-weight:700;font-size:14px;cursor:pointer;min-height:48px;
+  font-family:inherit;text-decoration:none;display:inline-block;text-align:center;
+  box-shadow:0 3px 0 #05080a,inset 0 1px 0 rgba(255,255,255,.06);
+  transition:transform .06s,box-shadow .06s,border-color .15s;
+}
+button:hover,.btn:hover{border-color:#4ade80}
+button:active,.btn:active{transform:translateY(3px);box-shadow:0 0 0 rgba(0,0,0,0),inset 0 1px 0 rgba(255,255,255,.06)}
+.primary{background:linear-gradient(#166534,#14532d);border-color:#22c55e;color:#dcfce7;box-shadow:0 3px 0 #052e16,inset 0 1px 0 rgba(255,255,255,.12)}
+.secondary{background:linear-gradient(#182218,#121a13);color:#d7f5e3}
+.picked{color:#8ba392;font-size:14px}
+#status{color:#4ade80;min-height:1.4em;margin:10px 0 6px}
+#status::before{content:"> ";color:#5b6b5e}
+/* ---- 语法高亮的代码块（替代原来的 textarea） ---- */
+.codeblock{
+  width:100%;max-height:340px;overflow:auto;margin:0;
+  background:#05080a;color:#d5e5d8;border:1px solid #243526;border-radius:10px;
+  padding:14px;font-size:12px;line-height:1.7;white-space:pre;
+}
+.codeblock:focus-visible{outline:2px solid #4ade80;outline-offset:2px}
+.hl-com{color:#5b6b5e}
+.hl-sec{color:#7dd3fc;font-weight:700}
+.hl-kw{color:#4ade80}
+.hl-dom{color:#e2e8f0}
+.hl-proxy{color:#fbbf24}
+.hl-final{color:#f87171;font-weight:700}
+.hl-dir{color:#fbbf24;font-weight:700}
+.hl-val{color:#d5e5d8}
+.warn{background:#1a1408;border:1px solid #7a5b1e;color:#ffd479;border-radius:10px;padding:12px 14px;font-size:14px;margin-top:14px}
+.warn::before{content:"[!] ";font-weight:700}
+.src{color:#5b6b5e;font-size:13px;margin:10px 0 0}
 .preset-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
-.preset{border:1px solid #2c3c55;border-radius:12px;padding:16px;background:#0d1526}
-.preset h3{margin:0 0 2px;font-size:16px}
-.preset p{color:#93a5c0;font-size:13px;margin:0 0 12px}
+.preset{border:1px solid #243526;border-radius:10px;padding:16px;background:#0c120d;transition:border-color .15s}
+.preset:hover{border-color:#3a5a40}
+.preset h3{margin:0 0 2px;font-size:16px;color:#eafff0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.preset p{color:#8ba392;font-size:13px;margin:0 0 12px}
 .preset .row{margin-top:0}
-.preset .btn,.preset button{flex:1;padding:11px 10px;font-size:14px;min-height:44px}
-.steps{margin:0 0 14px;padding-left:20px;color:#aab8d0;font-size:14px}
+.preset .btn,.preset button{flex:1;padding:11px 10px;font-size:14px;min-height:48px}
+.steps{margin:0 0 14px;padding-left:20px;color:#9db3a4;font-size:14px}
 .steps li{margin:4px 0}
-input[type=text]{flex:1;min-width:200px;background:#0c1629;color:#e9eef9;border:1px solid #2c3c55;border-radius:10px;padding:12px 14px;font:14px ui-monospace,SFMono-Regular,Menlo,monospace;min-height:48px}
-code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;overflow-wrap:anywhere}
+.steps li::marker{color:#4ade80}
+input[type=text]{flex:1;min-width:200px;background:#070c08;color:#eafff0;border:1px solid #243526;border-radius:8px;padding:12px 14px;font-size:14px;min-height:48px;font-family:inherit}
+input[type=text]:focus{outline:none;border-color:#4ade80;box-shadow:0 0 0 2px rgba(74,222,128,.25)}
+code{font-family:inherit;overflow-wrap:anywhere}
 .duo{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 @media(max-width:560px){.duo{grid-template-columns:1fr}}
-.duo div{border:1px solid #2c3c55;border-radius:12px;padding:14px;background:#0d1526}
-.duo h3{margin:0 0 4px;font-size:15px}
-.duo p{margin:0;color:#93a5c0;font-size:13px}
-.sub-out{margin-top:14px;border-top:1px dashed #2c3c55;padding-top:14px}
-.sub-out code{display:block;background:#0c1629;border:1px solid #2c3c55;border-radius:8px;padding:10px;margin:8px 0;font-size:12px}
+.duo div{border:1px solid #243526;border-radius:10px;padding:14px;background:#0c120d}
+.duo h3{margin:0 0 4px;font-size:15px;color:#eafff0}
+.duo h3::before{content:"$ ";color:#4ade80}
+.duo p{margin:0;color:#8ba392;font-size:13px}
+.sub-out{margin-top:14px;border-top:1px dashed #243526;padding-top:14px}
+.sub-out code{display:block;background:#05080a;border:1px solid #243526;border-radius:8px;padding:10px;margin:8px 0;font-size:12px;color:#7dd3fc}
 .warnline{color:#ffd479;font-size:13px}
-footer{color:#7d93b5;font-size:13px;text-align:center}
-a{color:#79c9ff}
-:focus-visible{outline:2px solid #5cbcf5;outline-offset:2px}
+footer{color:#5b6b5e;font-size:13px;text-align:center;margin-top:22px}
+footer::before{content:"// eof";display:block;color:#3a4a3e;margin-bottom:6px}
+a{color:#7dd3fc}
+:focus-visible{outline:2px solid #4ade80;outline-offset:2px}
+/* ---- 底部固定状态栏 ---- */
+.statusbar{
+  position:fixed;left:0;right:0;bottom:0;z-index:20;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  background:rgba(10,15,12,.96);border-top:1px solid #1f2d22;
+  padding:9px 14px calc(9px + env(safe-area-inset-bottom));
+  font-size:12px;color:#8ba392;
+}
+.statusbar .sb-left{display:flex;align-items:center;gap:8px;min-width:0}
+.sb-dot{width:8px;height:8px;border-radius:50%;background:#4ade80;flex:none;box-shadow:0 0 8px rgba(74,222,128,.8)}
+#barPicked{color:#4ade80;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-right{color:#5b6b5e;white-space:nowrap;flex:none}
+@media(max-width:560px){.sb-right{display:none}}
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="term">
+<div class="titlebar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><code>openc2023@github:~/RocketRules</code><span class="tb-right">zsh</span></div>
+<div class="term-body">
 
 <header>
-  <div class="kicker"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><code>openc2023 / RocketRules</code></div>
-  <h1><span class="prompt">$</span> RocketRules</h1>
+  <h1><span class="prompt">$</span> RocketRules<span class="cursor" aria-hidden="true"></span></h1>
   <p class="sub">选择哪些网站走 Shadowrocket 代理，其余全部直连。没有账号密码，不经过任何服务器；勾选只保存在网址参数里。</p>
   <p class="stats" id="stats">正在加载规则…</p>
 </header>
 
 <section class="panel">
-  <h2><span class="num">01</span>现成配置 · 点一下就导入</h2>
+  <h2><span class="num">[01]</span><span class="cmd">$ presets --import</span><span class="zh">现成配置 · 点一下就导入</span></h2>
   <p class="hint">下面 4 个是仓库里已经生成好的远程配置，地址固定不变。点「一键导入」会直接打开 Shadowrocket 并添加；如果没反应，复制远程配置地址，到 Shadowrocket「配置」→ 右上角 + → 粘贴 → Download → 点一下启用。</p>
   <div class="preset-grid" id="presets"></div>
 </section>
+<div class="sep" aria-hidden="true">────────────────────────────────────────────────────────────────────────</div>
 
 <section class="panel">
-  <h2><span class="num">02</span>自选规则</h2>
+  <h2><span class="num">[02]</span><span class="cmd">$ select-rules</span><span class="zh">自选规则</span></h2>
   <div class="grid" id="rules"></div>
   <div class="row">
     <button id="all" class="secondary">全选</button>
@@ -88,9 +157,10 @@ a{color:#79c9ff}
   <p class="src" id="srcNote"></p>
   <div class="warn" id="warnBox" hidden></div>
 </section>
+<div class="sep" aria-hidden="true">────────────────────────────────────────────────────────────────────────</div>
 
 <section class="panel">
-  <h2><span class="num">03</span>生成配置</h2>
+  <h2><span class="num">[03]</span><span class="cmd">$ build-config</span><span class="zh">生成配置</span></h2>
   <p class="hint">默认只勾 Meta 全家桶和 IP 测试网站。生成后在 Shadowrocket 的「配置」中导入，并选择你已有的代理节点；全局路由选「配置」。</p>
   <div class="row">
     <button id="download" class="primary">下载 .conf</button>
@@ -98,11 +168,12 @@ a{color:#79c9ff}
     <button id="copy" class="secondary">复制分享网址</button>
   </div>
   <p id="status" role="status"></p>
-  <textarea id="output" spellcheck="false" readonly></textarea>
+  <pre id="output" class="codeblock" tabindex="0" aria-label="生成的配置预览">$ build-config …</pre>
 </section>
+<div class="sep" aria-hidden="true">────────────────────────────────────────────────────────────────────────</div>
 
 <section class="panel">
-  <h2><span class="num">04</span>把自选配置变成订阅链接</h2>
+  <h2><span class="num">[04]</span><span class="cmd">$ publish --subscribe</span><span class="zh">把自选配置变成订阅链接</span></h2>
   <p class="hint">上面生成的配置是下载到手机里的文件，Shadowrocket 没法直接从网页里抓它。想长期用一个固定链接订阅，需要先把文件传到仓库的 configs/ 文件夹。</p>
   <ol class="steps">
     <li>点「下载 .conf」把文件存到手机</li>
@@ -123,9 +194,10 @@ a{color:#79c9ff}
     <p class="warnline">没上传之前这个地址是 404，导入会失败；传完再点。</p>
   </div>
 </section>
+<div class="sep" aria-hidden="true">────────────────────────────────────────────────────────────────────────</div>
 
 <section class="panel">
-  <h2><span class="num">05</span>分享网址 ≠ 订阅链接</h2>
+  <h2><span class="num">[05]</span><span class="cmd">$ share --vs-subscribe</span><span class="zh">分享网址 ≠ 订阅链接</span></h2>
   <div class="duo">
     <div><h3>分享网址</h3><p>打开这个页面并恢复你的勾选。只是个网页地址，不能加到 Shadowrocket 里当订阅。</p></div>
     <div><h3>远程配置地址</h3><p>一个 .conf 文件的直链，可以加到 Shadowrocket「配置」里，之后仓库里的文件改了，App 里点更新就能同步。</p></div>
@@ -135,8 +207,9 @@ a{color:#79c9ff}
 <footer>
   <p><a href="https://github.com/openc2023/RocketRules">github.com/openc2023/RocketRules</a> · 规则来自仓库 rules/*.list · 不含任何代理账号密码</p>
 </footer>
-
 </div>
+</div>
+<div class="statusbar"><span class="sb-left"><span class="sb-dot"></span><span>RocketRules</span><span id="barPicked">加载中…</span></span><span class="sb-right">FINAL,DIRECT · UTF-8 · LF</span></div>
 <script>
 'use strict';
 var REPO = 'openc2023/RocketRules';
@@ -345,8 +418,24 @@ function renderRules(){
   });
 }
 
+/* 把生成的 .conf 渲染成语法高亮的代码块；只做展示，下载/复制仍用 buildConfig 原文。 */
+function highlightConf(text){
+  return escapeHtml(text).split('\n').map(function(line){
+    if(!line) return '';
+    if(line.charAt(0) === '#') return '<span class="hl-com">' + line + '</span>';
+    if(line.charAt(0) === '[') return '<span class="hl-sec">' + line + '</span>';
+    if(line === 'FINAL,DIRECT') return '<span class="hl-final">FINAL</span>,<span class="hl-dir">DIRECT</span>';
+    var m = line.match(/^(DOMAIN-SUFFIX,)([^,]+)(,PROXY)$/);
+    if(m) return '<span class="hl-kw">' + m[1] + '</span><span class="hl-dom">' + m[2] + '</span><span class="hl-proxy">' + m[3] + '</span>';
+    var kv = line.match(/^([A-Za-z0-9-]+ = )(.*)$/);
+    if(kv) return '<span class="hl-kw">' + kv[1] + '</span><span class="hl-val">' + kv[2] + '</span>';
+    return line;
+  }).join('\n');
+}
+
 function render(){
-  el('output').value = buildConfig(selected);
+  el('output').innerHTML = highlightConf(buildConfig(selected));
+  el('barPicked').textContent = '已选 ' + selected.size + ' 组 · ' + countSelected() + ' 个域名';
   el('stats').textContent = '$ rules --loaded ' + totalDomains() + ' domains · ' + ORDER.length + ' groups';
   el('picked').textContent = '已选 ' + selected.size + ' 组 · ' + countSelected() + ' 个域名';
   document.querySelectorAll('#rules input').forEach(function(input, n){
