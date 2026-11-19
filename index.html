@@ -243,7 +243,7 @@ a{color:var(--cyan)}
 @media(max-width:900px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.hero-body{grid-template-columns:minmax(0,1fr) minmax(220px,.65fr)}}
 @media(max-width:700px){.hero-body{grid-template-columns:1fr;gap:18px}.hero-actions{max-width:none}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.preset-grid{grid-template-columns:1fr}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.name-controls{grid-template-columns:1fr}#liveGen{width:100%}}
 @media(max-width:520px){.wrap{padding-inline:12px}.anchor-nav{grid-template-columns:repeat(2,minmax(0,1fr));border-radius:14px}.grid{grid-template-columns:1fr}.card{min-height:unset}.card .meter{margin-top:12px;transform:none}.hero-body{padding:20px 16px}.panel{padding:18px 14px}.kpi{padding:13px}.preset .row,#sec-preview>.row,.sub-out .row,.sub-block>.row{grid-template-columns:1fr}.row>button{flex:1}.name-prefix{font-size:12px}.name-field>label span{display:block;margin:2px 0 0}.sec-head h2{font-size:20px}}
-</style>
+.provider-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px}.provider-row button{width:100%;min-width:0}@media(max-width:520px){.provider-row{grid-template-columns:1fr}}</style>
 </head>
 <body>
 <div class="wrap">
@@ -323,7 +323,7 @@ a{color:var(--cyan)}
     <h3><span class="tag tag-live">实时生成</span>一键生成订阅链接</h3>
     <p class="hint">每次勾选改动后点一次，当前配置就会上传并返回一条新链接，链接里是原始配置文本，不是下载页面。</p>
     <div class="name-field"><label for="nameSuffix">配置名称后缀 <span>自动跟随勾选，可手动修改</span></label><div class="name-controls"><div class="name-input"><span class="name-prefix">RocketRules-</span><input type="text" id="nameSuffix" placeholder="例如 meta-ip" spellcheck="false" maxlength="100" aria-label="配置名称后缀"></div><button id="liveGen" class="primary">生成订阅链接</button></div></div>
-    <p id="liveStatus" role="status"></p>
+    <div class="provider-row"><button type="button" class="secondary" id="publishPst">PST.RS · 自定义名称</button><button type="button" class="secondary" id="publishRubish">RubishBin · 备用</button></div><p id="liveStatus" role="status"></p>
     <div class="sub-out" id="liveOut" hidden>
       <label>订阅链接（原始配置直链）</label>
       <code><a id="liveRaw" href="#" target="_blank" rel="noopener"></a></code>
@@ -334,7 +334,7 @@ a{color:var(--cyan)}
       <p class="warnline" id="liveStale" hidden>规则已改动，这个链接是旧快照，点「生成订阅链接」重新生成。</p>
     </div>
     <p class="fine">每次改规则都要重新点「生成订阅链接」，旧链接不会自动更新；链接是快照。</p>
-    <p class="fine">隐私：配置只含公开域名列表，不含账号密码；但 FreePastebin 可能记录提交内容和 IP。</p>
+    <p class="fine">隐私：仅上传公开域名规则，不包含账号密码；第三方服务可能记录提交内容和 IP。PST.RS 自定义名称可能被占用，RubishBin 可能返回随机链接 ID。</p>
   </div>
 
 
@@ -413,6 +413,8 @@ var groups = null;
 var groupWarns = {};
 var loadWarnings = [];
 var PASTEBIN_API = 'https://freepastebin.com/api/pastes';
+var PST_API = 'https://paster.abhicracker.com/';
+var RUBISH_API = 'https://www.rubish.click/x/create';
 var liveSnapshot = null;
 var query = new URLSearchParams(location.search);
 var selected = new Set(
@@ -665,45 +667,55 @@ function setLiveStatus(msg, isErr){
 
 /* 实时生成：把当前 .conf 上传到 FreePastebin，返回原始文本直链。
  * 单条上限 1 MiB，.conf 只有几 KB；expires_at 为 null，即无过期时间。 */
-async function uploadLive(){
-  var btn = el('liveGen');
-  var conf = buildConfig(selected);
-  btn.disabled = true;
-  var old = btn.textContent;
-  btn.textContent = '上传中…';
-  setLiveStatus('');
-  var ac = null, timer = 0;
+async function uploadLive(provider){
+  provider = provider || 'pst';
+  var btn = provider === 'rubish' ? el('publishRubish') : el('liveGen');
+  var conf = buildConfig(selected), name = configName();
+  var buttons = [el('liveGen'),el('publishPst'),el('publishRubish')];
+  buttons.forEach(function(b){ b.disabled = true; });
+  setLiveStatus('正在上传到 ' + (provider === 'rubish' ? 'RubishBin' : 'PST.RS') + '…');
+  var ac = new AbortController(), timer = setTimeout(function(){ ac.abort(); }, 18000);
   try{
-    if(typeof AbortController !== 'undefined'){
-      ac = new AbortController();
-      timer = setTimeout(function(){ ac.abort(); }, 15000);
+    var res, data, raw;
+    if(provider === 'rubish'){
+      res = await fetch(RUBISH_API,{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({title:name+'.conf',content:conf,language:'text',slug:name}),
+        signal:ac.signal
+      });
+      if(!res.ok) throw new Error('RubishBin HTTP '+res.status);
+      data = await res.json();
+      var item = data.paste || data.data || data;
+      var id = item.id || item.slug || item.paste_id;
+      raw = item.raw_url || item.rawUrl || item.raw;
+      if(!raw && id) raw = 'https://www.rubish.click/x/raw/' + encodeURIComponent(id);
+      if(!raw) throw new Error('RubishBin 没有返回原始文本地址');
+    }else{
+      res = await fetch(PST_API,{
+        method:'POST',
+        headers:{'Content-Type':'text/plain;charset=UTF-8','Accept':'application/json','X-Paste-Title':name+'.conf','X-Paste-ID':name.slice(0,64)},
+        body:conf,signal:ac.signal
+      });
+      if(!res.ok) throw new Error('PST.RS HTTP '+res.status+(res.status===409?'（名称可能已被占用）':''));
+      data = await res.json();
+      if(!data.id && !data.url) throw new Error('PST.RS 没有返回配置 ID');
+      raw = new URL('/raw/'+encodeURIComponent(data.id || new URL(data.url).pathname.split('/').filter(Boolean).pop()),PST_API).href;
     }
-    var res = await fetch(PASTEBIN_API, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({content: conf, title: configName()}),
-      signal: ac ? ac.signal : undefined
-    });
-    if(!res.ok) throw new Error('接口返回 HTTP ' + res.status);
-    var data = await res.json();
-    if(!data || !data.raw_url) throw new Error('接口没有返回订阅链接');
+    var url = new URL(raw);
+    if(url.protocol !== 'https:') throw new Error('服务未返回安全的 HTTPS 地址');
     liveSnapshot = conf;
-    el('liveRaw').textContent = data.raw_url;
-    el('liveRaw').href = data.raw_url;
-    el('liveImport').href = importUrl(data.raw_url);
+    el('liveRaw').textContent = url.href;
+    el('liveRaw').href = url.href;
+    el('liveImport').href = importUrl(url.href);
     el('liveOut').hidden = false;
     el('liveStale').hidden = true;
-    setLiveStatus('订阅链接已生成，可直接导入 Shadowrocket');
+    setLiveStatus('已生成 '+name+'.conf · '+(provider==='rubish'?'RubishBin':'PST.RS')+'（请在 Shadowrocket 中验证导入）');
     status('订阅链接已生成');
   }catch(e){
-    var msg;
-    if(e && e.name === 'AbortError') msg = '上传超时（15 秒），请检查网络后重试。也可以下载 .conf 文件手动导入。';
-    else msg = '上传失败：' + (e && e.message ? e.message : '未知错误') + '。可以下载 .conf 文件手动导入。';
-    setLiveStatus(msg, true);
+    setLiveStatus('生成失败：'+(e.name==='AbortError'?'请求超时':e.message)+'。可换另一服务，或下载 .conf 手动导入。',true);
   }finally{
-    if(timer && typeof clearTimeout === 'function') clearTimeout(timer);
-    btn.disabled = false;
-    btn.textContent = old;
+    clearTimeout(timer);
+    buttons.forEach(function(b){ b.disabled=false; });
   }
 }
 
@@ -722,7 +734,9 @@ el('download').addEventListener('click', function(){
 });
 el('copy').addEventListener('click', function(){ copyText(shareUrl(), '已复制分享网址', this); });
 el('copyconf').addEventListener('click', function(){ copyText(buildConfig(selected), '已复制配置文本', this); });
-el('liveGen').addEventListener('click', uploadLive);
+el('liveGen').addEventListener('click', function(){uploadLive('pst');});
+el('publishPst').addEventListener('click', function(){uploadLive('pst');});
+el('publishRubish').addEventListener('click', function(){uploadLive('rubish');});
 el('copyLive').addEventListener('click', function(){ copyText(el('liveRaw').textContent, '已复制订阅链接', this); });
 el('heroCopy').addEventListener('click', function(){ copyText(rawUrl('configs/combined.conf'), '已复制订阅地址', this); });
 
