@@ -1,1 +1,431 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RocketRules · 自选分流</title><style>:root{font-family:system-ui,-apple-system,sans-serif;color-scheme:dark;background:#0b1120;color:#e9eef9}*{box-sizing:border-box}body{max-width:900px;margin:0 auto;padding:32px 20px}h1{font-size:clamp(32px,6vw,52px);margin:12px 0}p{color:#aab8d0;line-height:1.7}.panel{background:#151f34;border:1px solid #2c3c55;border-radius:18px;padding:24px;margin:22px 0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}label{display:flex;gap:12px;align-items:center;padding:14px;border:1px solid #34445e;border-radius:12px;cursor:pointer}label:has(input:checked){background:#18344c;border-color:#5cbcf5}input{accent-color:#55bbfa;width:18px;height:18px}button{border:0;background:#55bbfa;color:#071626;border-radius:10px;padding:12px 18px;font-weight:700;cursor:pointer;margin:5px 7px 5px 0}button.secondary{background:#2d3e59;color:#eaf2ff}textarea{width:100%;height:240px;background:#0c1629;color:#bfe8ff;border:1px solid #34445e;border-radius:12px;padding:14px;font:12px/1.6 monospace}small{color:#9caec7}a{color:#79c9ff}code{overflow-wrap:anywhere}</style></head><body><h1>🚀 RocketRules</h1><p>选择哪些网站走 Shadowrocket VPN，其余全部直连。无需注册、无需服务器；你的选择仅保存在网址参数中。</p><section class="panel"><h2>选择代理规则</h2><div class="grid" id="rules"></div><p><button id="all" class="secondary">全选</button><button id="none" class="secondary">清空</button></p></section><section class="panel"><h2>生成配置</h2><p>默认仅 Meta 与两个 IP 检测网站走 VPN。下载后在 Shadowrocket 的「配置」中导入，并选择已有代理节点。</p><button id="download">下载 .conf</button><button id="copy" class="secondary">复制分享网址</button><button id="copyconf" class="secondary">复制配置文本</button><p id="status" role="status"></p><textarea id="output" spellcheck="false" readonly></textarea></section><p><small>提示：分享网址打开的是本网页并恢复勾选项，不是可直接添加为远程配置的 .conf 链接。若需要长期固定的远程订阅 URL，应将生成的 .conf 提交到仓库后使用 GitHub Raw 地址。部分服务可能使用未收录的域名或 IP。</small></p><script>const groups={"meta":["facebook.com","facebook.net","fb.com","fbcdn.net","fbsbx.com","fb.me","fb.watch","facebookmail.com","instagram.com","cdninstagram.com","ig.me","threads.net","threads.com","whatsapp.com","whatsapp.net","wa.me","messenger.com","m.me","meta.com","meta.ai","metaverse.com","oculus.com","oculuscdn.com"],"openai":["openai.com","chatgpt.com","oaistatic.com","oaiusercontent.com"],"claude":["anthropic.com","claude.ai"],"gemini":["gemini.google.com","generativelanguage.googleapis.com","aistudio.google.com"],"grok":["x.ai","grok.com"],"youtube":["youtube.com","youtu.be","googlevideo.com","ytimg.com"],"tiktok":["tiktok.com","tiktokcdn.com","tiktokv.com"],"telegram":["telegram.org","t.me","telegram.me"],"x":["x.com","twitter.com","twimg.com","t.co"],"discord":["discord.com","discord.gg","discordapp.com","discordapp.net"],"netflix":["netflix.com","nflxvideo.net","nflximg.net"],"ip":["ip138.com","ip.me"]},labels={"meta":"Meta 全家桶","openai":"ChatGPT / OpenAI","claude":"Claude","gemini":"Gemini","grok":"Grok / xAI","youtube":"YouTube","tiktok":"TikTok","telegram":"Telegram","x":"X / Twitter","discord":"Discord","netflix":"Netflix","ip":"IP 测试网站"};const keys=Object.keys(groups);const query=new URLSearchParams(location.search);const selected=new Set(query.has('r')?query.get('r').split(',').filter(x=>keys.includes(x)):['meta','ip']);const el=document.getElementById('rules');keys.forEach(k=>{let l=document.createElement('label'),i=document.createElement('input');i.type='checkbox';i.checked=selected.has(k);i.addEventListener('change',()=>{i.checked?selected.add(k):selected.delete(k);render()});l.append(i,document.createTextNode(labels[k]));el.append(l)});function config(){let a=['# RocketRules generated config','# Selected: '+[...selected].join(', '),'[General]','bypass-system = true','dns-server = system','','[Rule]'];let seen=new Set;keys.filter(k=>selected.has(k)).forEach(k=>{a.push('# '+labels[k]);groups[k].forEach(d=>{if(!seen.has(d)){a.push('DOMAIN-SUFFIX,'+d+',PROXY');seen.add(d)}})});a.push('FINAL,DIRECT');return a.join('\n')+'\n'}function url(){let u=new URL(location.href);u.searchParams.set('r',keys.filter(k=>selected.has(k)).join(','));return u.href}function render(){document.getElementById('output').value=config();document.querySelectorAll('#rules input').forEach((i,n)=>i.checked=selected.has(keys[n]));history.replaceState(null,'',url())}function status(s){document.getElementById('status').textContent=s}document.getElementById('all').onclick=()=>{keys.forEach(k=>selected.add(k));render()};document.getElementById('none').onclick=()=>{selected.clear();render()};document.getElementById('download').onclick=()=>{const b=new Blob([config()],{type:'text/plain;charset=utf-8'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='RocketRules.conf';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);status('配置已生成，请在 Shadowrocket 中导入')};async function copy(s){try{await navigator.clipboard.writeText(s);status('已复制')}catch(e){status('复制失败，请手动选择复制')}}document.getElementById('copy').onclick=()=>copy(url());document.getElementById('copyconf').onclick=()=>copy(config());render();</script></body></html>
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RocketRules · 自选分流</title>
+<style>
+:root{color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:#0a0f1c;color:#e9eef9;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.6}
+.wrap{max-width:860px;margin:0 auto;padding:28px 18px 64px}
+.kicker{display:flex;align-items:center;gap:8px;font:12px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;color:#7d93b5}
+.dot{width:10px;height:10px;border-radius:50%;flex:none}
+.r{background:#ff5f57}.y{background:#febc2e}.g{background:#28c840}
+h1{font-size:clamp(30px,7vw,44px);margin:10px 0 4px;letter-spacing:-.5px}
+h1 .prompt{color:#5cbcf5;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.sub{color:#aab8d0;margin:0 0 8px}
+.stats{font:13px ui-monospace,SFMono-Regular,Menlo,monospace;color:#7fd6a4;margin:0}
+.panel{background:#101828;border:1px solid #22314d;border-radius:16px;padding:20px;margin:20px 0}
+h2{font-size:19px;margin:0 0 6px}
+h2 .num{font:13px ui-monospace,SFMono-Regular,Menlo,monospace;color:#5cbcf5;border:1px solid #2c4a68;border-radius:6px;padding:2px 7px;margin-right:8px;vertical-align:2px}
+.hint{color:#9caec7;font-size:14px;margin:4px 0 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+.card{display:flex;gap:12px;align-items:flex-start;padding:14px;border:1px solid #2c3c55;border-radius:12px;cursor:pointer;background:#0d1526}
+.card:has(input:checked){background:#12283d;border-color:#5cbcf5}
+.card input{accent-color:#55bbfa;width:20px;height:20px;margin-top:2px;flex:none}
+.card .t{flex:1;min-width:0}
+.card strong{display:block;font-size:15px}
+.card small{display:block;color:#93a5c0;font-size:13px;line-height:1.5}
+.badge{font:11px ui-monospace,SFMono-Regular,Menlo,monospace;color:#7fd6a4;border:1px solid #2c4a68;border-radius:20px;padding:2px 8px;white-space:nowrap;flex:none}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px}
+button,.btn{border:0;border-radius:10px;padding:13px 18px;font-weight:700;font-size:15px;cursor:pointer;min-height:48px;text-decoration:none;display:inline-block;text-align:center;font-family:inherit}
+.primary{background:#55bbfa;color:#071626}
+.secondary{background:#22314d;color:#eaf2ff}
+button:active,.btn:active{transform:translateY(1px)}
+.picked{color:#9caec7;font-size:14px}
+#status{color:#7fd6a4;min-height:1.4em;margin:10px 0 6px}
+textarea{width:100%;height:230px;background:#0c1629;color:#bfe8ff;border:1px solid #2c3c55;border-radius:12px;padding:14px;font:12px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;resize:vertical}
+.warn{background:#2a1f0d;border:1px solid #7a5b1e;color:#ffd479;border-radius:12px;padding:12px 14px;font-size:14px;margin-top:14px}
+.src{color:#7d93b5;font-size:13px;margin:10px 0 0}
+.preset-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+.preset{border:1px solid #2c3c55;border-radius:12px;padding:16px;background:#0d1526}
+.preset h3{margin:0 0 2px;font-size:16px}
+.preset p{color:#93a5c0;font-size:13px;margin:0 0 12px}
+.preset .row{margin-top:0}
+.preset .btn,.preset button{flex:1;padding:11px 10px;font-size:14px;min-height:44px}
+.steps{margin:0 0 14px;padding-left:20px;color:#aab8d0;font-size:14px}
+.steps li{margin:4px 0}
+input[type=text]{flex:1;min-width:200px;background:#0c1629;color:#e9eef9;border:1px solid #2c3c55;border-radius:10px;padding:12px 14px;font:14px ui-monospace,SFMono-Regular,Menlo,monospace;min-height:48px}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;overflow-wrap:anywhere}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:560px){.duo{grid-template-columns:1fr}}
+.duo div{border:1px solid #2c3c55;border-radius:12px;padding:14px;background:#0d1526}
+.duo h3{margin:0 0 4px;font-size:15px}
+.duo p{margin:0;color:#93a5c0;font-size:13px}
+.sub-out{margin-top:14px;border-top:1px dashed #2c3c55;padding-top:14px}
+.sub-out code{display:block;background:#0c1629;border:1px solid #2c3c55;border-radius:8px;padding:10px;margin:8px 0;font-size:12px}
+.warnline{color:#ffd479;font-size:13px}
+footer{color:#7d93b5;font-size:13px;text-align:center}
+a{color:#79c9ff}
+:focus-visible{outline:2px solid #5cbcf5;outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kicker"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><code>openc2023 / RocketRules</code></div>
+  <h1><span class="prompt">$</span> RocketRules</h1>
+  <p class="sub">选择哪些网站走 Shadowrocket 代理，其余全部直连。没有账号密码，不经过任何服务器；勾选只保存在网址参数里。</p>
+  <p class="stats" id="stats">正在加载规则…</p>
+</header>
+
+<section class="panel">
+  <h2><span class="num">01</span>现成配置 · 点一下就导入</h2>
+  <p class="hint">下面 4 个是仓库里已经生成好的远程配置，地址固定不变。点「一键导入」会直接打开 Shadowrocket 并添加；如果没反应，复制远程配置地址，到 Shadowrocket「配置」→ 右上角 + → 粘贴 → Download → 点一下启用。</p>
+  <div class="preset-grid" id="presets"></div>
+</section>
+
+<section class="panel">
+  <h2><span class="num">02</span>自选规则</h2>
+  <div class="grid" id="rules"></div>
+  <div class="row">
+    <button id="all" class="secondary">全选</button>
+    <button id="none" class="secondary">清空</button>
+    <span class="picked" id="picked"></span>
+  </div>
+  <p class="src" id="srcNote"></p>
+  <div class="warn" id="warnBox" hidden></div>
+</section>
+
+<section class="panel">
+  <h2><span class="num">03</span>生成配置</h2>
+  <p class="hint">默认只勾 Meta 全家桶和 IP 测试网站。生成后在 Shadowrocket 的「配置」中导入，并选择你已有的代理节点；全局路由选「配置」。</p>
+  <div class="row">
+    <button id="download" class="primary">下载 .conf</button>
+    <button id="copyconf" class="secondary">复制配置文本</button>
+    <button id="copy" class="secondary">复制分享网址</button>
+  </div>
+  <p id="status" role="status"></p>
+  <textarea id="output" spellcheck="false" readonly></textarea>
+</section>
+
+<section class="panel">
+  <h2><span class="num">04</span>把自选配置变成订阅链接</h2>
+  <p class="hint">上面生成的配置是下载到手机里的文件，Shadowrocket 没法直接从网页里抓它。想长期用一个固定链接订阅，需要先把文件传到仓库的 configs/ 文件夹。</p>
+  <ol class="steps">
+    <li>点「下载 .conf」把文件存到手机</li>
+    <li>打开 GitHub 仓库 → configs 文件夹 → Add file → Upload files，上传刚才的文件</li>
+    <li>回到这里点「一键导入」，或复制下面的远程配置地址，到 Shadowrocket「配置」→ + → 粘贴 → Download</li>
+  </ol>
+  <div class="row">
+    <input type="text" id="customName" value="rocketrules-custom.conf" spellcheck="false" aria-label="自定义配置文件名">
+    <button id="makeSub" class="secondary">生成订阅链接</button>
+  </div>
+  <div class="sub-out" id="subOut" hidden>
+    <label>远程配置地址</label>
+    <code id="subRaw"></code>
+    <div class="row">
+      <a class="btn primary" id="subImport" href="#">一键导入 Shadowrocket</a>
+      <button class="secondary" id="copySub">复制远程配置地址</button>
+    </div>
+    <p class="warnline">没上传之前这个地址是 404，导入会失败；传完再点。</p>
+  </div>
+</section>
+
+<section class="panel">
+  <h2><span class="num">05</span>分享网址 ≠ 订阅链接</h2>
+  <div class="duo">
+    <div><h3>分享网址</h3><p>打开这个页面并恢复你的勾选。只是个网页地址，不能加到 Shadowrocket 里当订阅。</p></div>
+    <div><h3>远程配置地址</h3><p>一个 .conf 文件的直链，可以加到 Shadowrocket「配置」里，之后仓库里的文件改了，App 里点更新就能同步。</p></div>
+  </div>
+</section>
+
+<footer>
+  <p><a href="https://github.com/openc2023/RocketRules">github.com/openc2023/RocketRules</a> · 规则来自仓库 rules/*.list · 不含任何代理账号密码</p>
+</footer>
+
+</div>
+<script>
+'use strict';
+var REPO = 'openc2023/RocketRules';
+var BRANCH = 'main';
+var RAW_BASE = 'https://raw.githubusercontent.com/' + REPO + '/' + BRANCH + '/';
+var ORDER = ['meta','openai','claude','gemini','grok','youtube','tiktok','telegram','x','discord','netflix','ip'];
+var META = {
+  meta:     {label:'Meta 全家桶',      desc:'Facebook、Instagram、WhatsApp、Threads 等', def:true},
+  openai:   {label:'ChatGPT / OpenAI', desc:'ChatGPT 聊天与 OpenAI API'},
+  claude:   {label:'Claude',           desc:'Anthropic Claude 聊天与 API'},
+  gemini:   {label:'Gemini',           desc:'Google Gemini 与 AI Studio'},
+  grok:     {label:'Grok / xAI',       desc:'Grok 聊天与 xAI'},
+  youtube:  {label:'YouTube',          desc:'视频与相关 CDN'},
+  tiktok:   {label:'TikTok',           desc:'TikTok 与视频 CDN'},
+  telegram: {label:'Telegram',         desc:'Telegram 聊天与文件传输'},
+  x:        {label:'X / Twitter',      desc:'X、Twitter 与图片 CDN'},
+  discord:  {label:'Discord',          desc:'Discord 聊天、语音与频道'},
+  netflix:  {label:'Netflix',          desc:'Netflix 影视与播放 CDN'},
+  ip:       {label:'IP 测试网站',      desc:'ip138 与 ip.me，检测出口 IP', def:true}
+};
+/* 内置备份：与 rules/*.list 同步；正常情况下页面会先读 rules/*.list，读不到才用这份。 */
+var FALLBACK = {
+  meta:['facebook.com','facebook.net','fb.com','fbcdn.net','fbsbx.com','fb.me','fb.watch','facebookmail.com','instagram.com','cdninstagram.com','ig.me','threads.net','threads.com','whatsapp.com','whatsapp.net','wa.me','messenger.com','m.me','meta.com','meta.ai','metaverse.com','oculus.com','oculuscdn.com'],
+  openai:['openai.com','chatgpt.com','oaistatic.com','oaiusercontent.com'],
+  claude:['anthropic.com','claude.ai','claude.com'],
+  gemini:['gemini.google.com','generativelanguage.googleapis.com','aistudio.google.com','ai.google.dev'],
+  grok:['x.ai','grok.com'],
+  youtube:['youtube.com','youtu.be','googlevideo.com','ytimg.com','youtube-nocookie.com'],
+  tiktok:['tiktok.com','tiktokcdn.com','tiktokv.com'],
+  telegram:['telegram.org','t.me','telegram.me'],
+  x:['x.com','twitter.com','twimg.com','t.co'],
+  discord:['discord.com','discord.gg','discordapp.com','discordapp.net','discord.media'],
+  netflix:['netflix.com','nflxvideo.net','nflximg.net','nflxext.com'],
+  ip:['ip138.com','ip.me']
+};
+var PRESETS = [
+  {id:'meta-only',   file:'configs/meta-only.conf',   name:'Meta 只用',  desc:'只走 Meta 全家桶 + IP 检测',                    groups:['meta','ip']},
+  {id:'ai-only',     file:'configs/ai-only.conf',     name:'AI 只用',    desc:'ChatGPT、Claude、Gemini、Grok + IP 检测',        groups:['openai','claude','gemini','grok','ip']},
+  {id:'social-only', file:'configs/social-only.conf', name:'社交只用',   desc:'Meta、TikTok、Telegram、X、Discord + IP 检测',   groups:['meta','tiktok','telegram','x','discord','ip']},
+  {id:'combined',    file:'configs/combined.conf',    name:'全部规则',   desc:'全部 12 组，一次全走代理',                      groups:ORDER.slice()}
+];
+
+var groups = null;
+var loadWarnings = [];
+var query = new URLSearchParams(location.search);
+var selected = new Set(
+  query.has('r')
+    ? query.get('r').split(',').filter(function(x){ return ORDER.indexOf(x) !== -1; })
+    : ORDER.filter(function(k){ return META[k].def; })
+);
+
+function el(id){ return document.getElementById(id); }
+function escapeHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function status(s){ el('status').textContent = s; }
+function rawUrl(path){ return RAW_BASE + path; }
+function importUrl(raw){ return 'shadowrocket://install?url=' + encodeURIComponent(raw); }
+function totalDomains(){ return ORDER.reduce(function(n,k){ return n + (groups[k]||[]).length; }, 0); }
+function countSelected(){
+  var n = 0;
+  selected.forEach(function(k){ n += (groups[k]||[]).length; });
+  return n;
+}
+
+/* 校验一组规则：域名格式 + 组内/跨组重复。返回警告字符串数组。 */
+function validateGroups(g){
+  var warns = [];
+  var seen = {};
+  var re = /^[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/i;
+  ORDER.forEach(function(k){
+    var list = g[k] || [];
+    if(!list.length) warns.push(META[k].label + ' 没有域名');
+    list.forEach(function(d){
+      if(!re.test(d)) warns.push('域名格式可疑：' + d + '（' + META[k].label + '）');
+      if(seen[d]) warns.push('重复域名：' + d + '（' + seen[d] + ' 与 ' + META[k].label + '）');
+      seen[d] = META[k].label;
+    });
+  });
+  return warns;
+}
+
+/* 唯一数据源是 rules/*.list；读不到（比如直接用 file:// 打开）就用内置备份。 */
+async function loadRules(){
+  try{
+    var out = {};
+    for(var i = 0; i < ORDER.length; i++){
+      var k = ORDER[i];
+      var res = await fetch('rules/' + k + '.list', {cache:'no-store'});
+      if(!res.ok) throw new Error(k + ' HTTP ' + res.status);
+      var text = await res.text();
+      var domains = [];
+      text.split('\n').forEach(function(rawLine){
+        var line = rawLine.trim();
+        if(!line || line.charAt(0) === '#') return;
+        var m = line.match(/^DOMAIN-SUFFIX,([^,]+)$/);
+        if(!m){ loadWarnings.push('rules/' + k + '.list 有一行格式不对：' + line); return; }
+        domains.push(m[1].trim());
+      });
+      if(!domains.length) throw new Error(k + ' 为空');
+      out[k] = domains;
+    }
+    return {groups: out, source: 'rules/*.list（已加载）'};
+  }catch(e){
+    loadWarnings.push('rules/*.list 加载失败，已用页面内置备份：' + e.message);
+    return {groups: FALLBACK, source: '内置备份'};
+  }
+}
+
+function buildConfig(sel){
+  var a = [
+    '# RocketRules generated config',
+    '# Selected: ' + Array.from(sel).join(', '),
+    '# https://github.com/' + REPO,
+    '[General]',
+    'bypass-system = true',
+    'skip-proxy = 192.168.0.0/16, 10.0.0.0/8, 172.16.0.0/12, 127.0.0.1, localhost',
+    'dns-server = system',
+    '',
+    '[Rule]'
+  ];
+  var seen = {};
+  ORDER.forEach(function(k){
+    if(!sel.has(k)) return;
+    a.push('# ' + META[k].label);
+    (groups[k] || []).forEach(function(d){
+      if(seen[d]) return;
+      seen[d] = true;
+      a.push('DOMAIN-SUFFIX,' + d + ',PROXY');
+    });
+  });
+  a.push('FINAL,DIRECT');
+  return a.join('\n') + '\n';
+}
+
+function shareUrl(){
+  var u = new URL(location.href);
+  u.searchParams.set('r', ORDER.filter(function(k){ return selected.has(k); }).join(','));
+  return u.href;
+}
+
+function renderPresets(){
+  var box = el('presets');
+  box.innerHTML = '';
+  PRESETS.forEach(function(p){
+    var n = p.groups.reduce(function(c,k){ return c + (groups[k]||[]).length; }, 0);
+    var raw = rawUrl(p.file);
+    var card = document.createElement('article');
+    card.className = 'preset';
+    var h = document.createElement('h3');
+    h.textContent = p.name;
+    var badge = document.createElement('span');
+    badge.className = 'badge';
+    badge.textContent = n + ' 条规则';
+    h.appendChild(document.createTextNode(' '));
+    h.appendChild(badge);
+    var d = document.createElement('p');
+    d.textContent = p.desc;
+    var row = document.createElement('div');
+    row.className = 'row';
+    var a = document.createElement('a');
+    a.className = 'btn primary';
+    a.href = importUrl(raw);
+    a.textContent = '一键导入 Shadowrocket';
+    var b = document.createElement('button');
+    b.className = 'secondary';
+    b.textContent = '复制远程配置地址';
+    b.addEventListener('click', function(){ copyText(raw, '已复制远程配置地址'); });
+    row.appendChild(a);
+    row.appendChild(b);
+    card.appendChild(h);
+    card.appendChild(d);
+    card.appendChild(row);
+    box.appendChild(card);
+  });
+}
+
+function renderRules(){
+  var box = el('rules');
+  box.innerHTML = '';
+  ORDER.forEach(function(k){
+    var l = document.createElement('label');
+    l.className = 'card';
+    var i = document.createElement('input');
+    i.type = 'checkbox';
+    i.checked = selected.has(k);
+    i.addEventListener('change', function(){
+      if(i.checked) selected.add(k); else selected.delete(k);
+      render();
+    });
+    var t = document.createElement('span');
+    t.className = 't';
+    var s = document.createElement('strong');
+    s.textContent = META[k].label;
+    var sm = document.createElement('small');
+    sm.textContent = META[k].desc;
+    t.appendChild(s);
+    t.appendChild(sm);
+    var badge = document.createElement('span');
+    badge.className = 'badge';
+    badge.textContent = (groups[k] || []).length + ' 个域名';
+    l.appendChild(i);
+    l.appendChild(t);
+    l.appendChild(badge);
+    box.appendChild(l);
+  });
+}
+
+function render(){
+  el('output').value = buildConfig(selected);
+  el('stats').textContent = '$ rules --loaded ' + totalDomains() + ' domains · ' + ORDER.length + ' groups';
+  el('picked').textContent = '已选 ' + selected.size + ' 组 · ' + countSelected() + ' 个域名';
+  document.querySelectorAll('#rules input').forEach(function(input, n){
+    input.checked = selected.has(ORDER[n]);
+  });
+  try{ history.replaceState(null, '', shareUrl()); }catch(e){}
+}
+
+async function copyText(s, okMsg){
+  try{
+    await navigator.clipboard.writeText(s);
+    status(okMsg || '已复制');
+  }catch(e){
+    var ta = document.createElement('textarea');
+    ta.value = s;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try{ document.execCommand('copy'); status(okMsg || '已复制'); }
+    catch(e2){ status('复制失败，请手动选择复制'); }
+    document.body.removeChild(ta);
+  }
+}
+
+el('all').addEventListener('click', function(){ ORDER.forEach(function(k){ selected.add(k); }); render(); });
+el('none').addEventListener('click', function(){ selected.clear(); render(); });
+el('download').addEventListener('click', function(){
+  var blob = new Blob([buildConfig(selected)], {type:'text/plain;charset=utf-8'});
+  var u = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = u;
+  a.download = 'RocketRules.conf';
+  a.click();
+  setTimeout(function(){ URL.revokeObjectURL(u); }, 1000);
+  status('配置已生成，请在 Shadowrocket「配置」中导入');
+});
+el('copy').addEventListener('click', function(){ copyText(shareUrl(), '已复制分享网址'); });
+el('copyconf').addEventListener('click', function(){ copyText(buildConfig(selected), '已复制配置文本'); });
+el('makeSub').addEventListener('click', function(){
+  var name = el('customName').value.trim();
+  if(!/^[A-Za-z0-9._-]+\.conf$/.test(name)){ status('文件名不对：只能用字母、数字、._-，且以 .conf 结尾'); return; }
+  var raw = rawUrl('configs/' + name);
+  el('subRaw').textContent = raw;
+  el('subImport').href = importUrl(raw);
+  el('subOut').hidden = false;
+  status('订阅链接已生成，先把文件传到仓库再导入');
+});
+el('copySub').addEventListener('click', function(){ copyText(el('subRaw').textContent, '已复制远程配置地址'); });
+
+/* 供自动化测试使用，不影响页面功能。 */
+window.__rr = {
+  buildConfig: buildConfig,
+  shareUrl: shareUrl,
+  validateGroups: validateGroups,
+  importUrl: importUrl,
+  rawUrl: rawUrl,
+  META: META,
+  ORDER: ORDER,
+  PRESETS: PRESETS,
+  get groups(){ return groups; },
+  get selected(){ return selected; }
+};
+
+(async function init(){
+  var loaded = await loadRules();
+  groups = loaded.groups;
+  var warns = validateGroups(groups).concat(loadWarnings);
+  if(warns.length){
+    var box = el('warnBox');
+    box.hidden = false;
+    box.innerHTML = '<strong>规则检查发现 ' + warns.length + ' 个问题：</strong><br>' +
+      warns.map(escapeHtml).join('<br>');
+  }
+  el('srcNote').textContent = '规则来源：' + loaded.source + ' · 共 ' + totalDomains() + ' 个域名';
+  renderPresets();
+  renderRules();
+  render();
+})();
+</script>
+</body>
+</html>
