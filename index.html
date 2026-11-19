@@ -502,7 +502,7 @@ async function loadRules(){
   }
 }
 
-function autoSuffix(sel){ return ORDER.filter(function(k){return sel.has(k);}).join('-') || 'direct'; }
+function autoSuffix(sel){ var names = ORDER.filter(function(k){return sel.has(k);}); if(!names.length) return 'direct'; return names.length > 3 ? names.slice(0,3).join('-') + '-plus' + (names.length-3) : names.join('-'); }
 function configName(){ var suffix = el('nameSuffix').value.trim().replace(/[^A-Za-z0-9_-]/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,''); return 'RocketRules-' + (suffix || autoSuffix(selected)); }
 function syncSuffix(){ if(el('nameSuffix').dataset.custom !== 'yes') el('nameSuffix').value = autoSuffix(selected); }
 function buildConfig(sel){
